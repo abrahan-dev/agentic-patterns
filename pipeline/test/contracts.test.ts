@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { assertDishesPreserveSkeleton } from "../src/contracts.ts";
-import { demoPlan } from "../src/demo.ts";
+import { assertDishesPreserveSkeleton } from "../src/domain/contracts.ts";
+import { demoPlan } from "../src/demo/plan.ts";
 
 describe("contracts between stages", () => {
   test("accepts a meal plan that enriches the skeleton", () => {

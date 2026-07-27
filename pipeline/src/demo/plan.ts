@@ -1,4 +1,4 @@
-import type { FinalPlan } from "./schemas.ts";
+import type { FinalPlan } from "../domain/schemas.ts";
 
 export const demoPlan: FinalPlan = {
   menu: {

@@ -5,7 +5,7 @@ import type {
   MealType,
   RecipeDetail,
   WeekPreferences,
-} from "./schemas.ts";
+} from "../domain/schemas.ts";
 
 const cli = createInterface({ input: stdin, output: stdout });
 

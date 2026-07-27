@@ -17,6 +17,27 @@ In addition to validating data shapes with Zod, contracts between stages ensure
 that a stage cannot silently rewrite previous work—for example, changing a date
 while adding recipes.
 
+## Project structure
+
+```text
+src/
+├── index.ts                 # Composition root and linear orchestration
+├── config.ts                # Environment configuration
+├── domain/
+│   ├── schemas.ts           # Zod schemas and TypeScript types
+│   └── contracts.ts         # Invariants between stages
+├── pipeline/
+│   ├── stages.ts            # The four OpenAI stages
+│   └── prompts.ts           # Prompts for each stage
+├── cli/
+│   └── questions.ts         # Interactive user input
+├── output/
+│   ├── render-html.ts       # HTML generation
+│   └── open-browser.ts      # Browser adapter
+└── demo/
+    └── plan.ts              # Local demo fixture
+```
+
 ## Setup
 
 ```bash

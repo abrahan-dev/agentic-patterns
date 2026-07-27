@@ -1,21 +1,21 @@
 import OpenAI from "openai";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
-import { demoPlan } from "./demo.ts";
-import { openInDefaultBrowser } from "./open-browser.ts";
+import { demoPlan } from "./demo/plan.ts";
+import { openInDefaultBrowser } from "./output/open-browser.ts";
 import {
   addRecipes,
   createMenuSchema,
   createShoppingList,
   fillDishes,
-} from "./pipeline.ts";
+} from "./pipeline/stages.ts";
 import {
   askFoodPreferences,
   askRecipeDetail,
   askWeekPreferences,
   closeQuestions,
-} from "./questions.ts";
-import { renderHtml } from "./render.ts";
+} from "./cli/questions.ts";
+import { renderHtml } from "./output/render-html.ts";
 
 const isDemo = process.argv.includes("--demo");
 const outputDirectory = resolve(import.meta.dir, "../output");

@@ -5,7 +5,7 @@ import type {
   PlannedMenu,
   RecipeDetail,
   WeekPreferences,
-} from "./schemas.ts";
+} from "../domain/schemas.ts";
 
 const JSON_CONTEXT = (value: unknown) => JSON.stringify(value, null, 2);
 

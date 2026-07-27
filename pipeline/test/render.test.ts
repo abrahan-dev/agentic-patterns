@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { demoPlan } from "../src/demo.ts";
-import { renderHtml } from "../src/render.ts";
+import { demoPlan } from "../src/demo/plan.ts";
+import { renderHtml } from "../src/output/render-html.ts";
 
 describe("renderHtml", () => {
   test("includes all three result sections", () => {

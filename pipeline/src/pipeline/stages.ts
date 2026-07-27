@@ -13,7 +13,7 @@ import {
   type PlannedMenu,
   type RecipeDetail,
   type WeekPreferences,
-} from "./schemas.ts";
+} from "../domain/schemas.ts";
 import {
   dishesPrompt,
   recipesPrompt,
@@ -24,8 +24,8 @@ import {
   assertDishesPreserveSkeleton,
   assertRecipesPreserveMenu,
   assertShoppingPreservesPlan,
-} from "./contracts.ts";
-import { parseReasoningEffort } from "./config.ts";
+} from "../domain/contracts.ts";
+import { parseReasoningEffort } from "../config.ts";
 
 const MODEL = process.env.OPENAI_MODEL ?? "gpt-5.4-mini";
 const REASONING_EFFORT = parseReasoningEffort();
