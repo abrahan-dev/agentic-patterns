@@ -7,7 +7,7 @@ import type {
 } from "./schemas.ts";
 
 function fail(stage: string, detail: string): never {
-  throw new Error(`Contrato incumplido en ${stage}: ${detail}`);
+  throw new Error(`Contract violation in ${stage}: ${detail}`);
 }
 
 export function assertDishesPreserveSkeleton(
@@ -30,7 +30,7 @@ export function assertDishesPreserveSkeleton(
     skeleton.startsOn !== menu.startsOn ||
     !isDeepStrictEqual(expected, received)
   ) {
-    fail("planned_menu", "se modificó la estructura definida en la primera etapa");
+    fail("planned_menu", "the structure defined by the first stage was modified");
   }
 }
 
@@ -39,7 +39,7 @@ export function assertRecipesPreserveMenu(
   plan: MenuWithRecipes,
 ): void {
   if (!isDeepStrictEqual(menu, plan.menu)) {
-    fail("menu_with_recipes", "se modificó el menú de entrada");
+    fail("menu_with_recipes", "the input meal plan was modified");
   }
 
   const expectedMeals = menu.days.flatMap((day) =>
@@ -53,7 +53,7 @@ export function assertRecipesPreserveMenu(
     expectedMeals.length !== receivedRecipes.length ||
     !expectedMeals.every((meal) => receivedRecipes.includes(meal))
   ) {
-    fail("menu_with_recipes", "debe existir exactamente una receta por plato");
+    fail("menu_with_recipes", "there must be exactly one recipe per dish");
   }
 }
 
@@ -65,6 +65,6 @@ export function assertShoppingPreservesPlan(
     !isDeepStrictEqual(plan.menu, finalPlan.menu) ||
     !isDeepStrictEqual(plan.recipes, finalPlan.recipes)
   ) {
-    fail("final_weekly_plan", "se modificaron el menú o las recetas");
+    fail("final_weekly_plan", "the meal plan or recipes were modified");
   }
 }

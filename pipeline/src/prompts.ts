@@ -10,22 +10,22 @@ import type {
 const JSON_CONTEXT = (value: unknown) => JSON.stringify(value, null, 2);
 
 export function schemaPrompt(preferences: WeekPreferences): string {
-  return `Crea la estructura de un menú semanal de exactamente siete días.
-La semana empieza el ${preferences.startsOn}.
-Cada día debe contener exactamente estas tomas, en este orden: ${preferences.mealTypes.join(", ")}.
-Esta etapa solo crea el calendario y los huecos: no inventes platos todavía.`;
+  return `Create the structure of a weekly meal plan with exactly seven days.
+The week starts on ${preferences.startsOn}.
+Each day must contain exactly these meal slots, in this order: ${preferences.mealTypes.join(", ")}.
+This stage only creates the calendar and meal slots. Do not invent dishes yet.`;
 }
 
 export function dishesPrompt(
   skeleton: MenuSkeleton,
   preferences: FoodPreferences,
 ): string {
-  return `Rellena cada hueco del menú con un plato concreto, variado y realista.
-Respeta literalmente fechas, días y tipos de comida del esquema recibido.
-Restricciones o preferencias alimentarias: ${preferences.restrictions || "ninguna"}.
-Evita repeticiones innecesarias y procura reutilizar ingredientes para reducir desperdicio.
+  return `Fill every meal slot with a specific, varied, and realistic dish.
+Preserve the dates, day names, and meal types from the input skeleton exactly.
+Dietary restrictions or preferences: ${preferences.restrictions || "none"}.
+Avoid unnecessary repetition and reuse ingredients where practical to reduce waste.
 
-ESQUEMA DE ENTRADA:
+INPUT SKELETON:
 ${JSON_CONTEXT(skeleton)}`;
 }
 
@@ -33,22 +33,22 @@ export function recipesPrompt(
   menu: PlannedMenu,
   detail: RecipeDetail,
 ): string {
-  return `Añade una receta para cada plato del menú.
-Las recetas deben ser ${detail}, domésticas y posibles con equipamiento habitual.
-Conserva el menú recibido sin modificarlo. Cada receta debe poder vincularse por fecha, tipo de comida y plato.
-Da cantidades útiles para una persona; la lista de compra posterior las consolidará.
+  return `Add one recipe for every dish in the meal plan.
+Recipes must be ${detail}, suitable for home cooking, and possible with standard kitchen equipment.
+Preserve the input meal plan without changes. Each recipe must be linked by date, meal type, and dish.
+Provide useful quantities for one person; the shopping-list stage will consolidate them.
 
-MENÚ DE ENTRADA:
+INPUT MEAL PLAN:
 ${JSON_CONTEXT(menu)}`;
 }
 
 export function shoppingPrompt(plan: MenuWithRecipes): string {
-  return `Genera la lista de la compra completa a partir de todas las recetas.
-Conserva sin cambios el menú y las recetas de entrada.
-Agrupa y suma ingredientes equivalentes, usa cantidades prácticas y clasifica los artículos
-por secciones habituales de un hipermercado español (fruta y verdura, carnicería, lácteos, etc.).
-No incluyas utensilios ni ingredientes que no aparezcan en las recetas.
+  return `Generate the complete shopping list from all recipes.
+Preserve the input meal plan and recipes without changes.
+Merge equivalent ingredients, add their quantities, use practical units, and group items
+by common supermarket sections such as produce, meat, dairy, and pantry.
+Do not include utensils or ingredients that do not appear in the recipes.
 
-PLAN CON RECETAS:
+PLAN WITH RECIPES:
 ${JSON_CONTEXT(plan)}`;
 }

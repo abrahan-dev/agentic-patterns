@@ -10,43 +10,43 @@ import type {
 const cli = createInterface({ input: stdin, output: stdout });
 
 async function askYesNo(question: string, defaultValue = false): Promise<boolean> {
-  const hint = defaultValue ? "S/n" : "s/N";
+  const hint = defaultValue ? "Y/n" : "y/N";
   const answer = (await cli.question(`${question} (${hint}) `)).trim().toLowerCase();
   if (!answer) return defaultValue;
-  return answer === "s" || answer === "sí" || answer === "si";
+  return answer === "y" || answer === "yes";
 }
 
 export async function askWeekPreferences(): Promise<WeekPreferences> {
-  console.log("\nPaso 1 · Estructura de la semana");
+  console.log("\nStage 1 · Weekly structure");
   const today = new Date().toISOString().slice(0, 10);
   const startsOn =
-    (await cli.question(`¿Cuándo comienza la semana? [${today}] `)).trim() || today;
+    (await cli.question(`When does the week start? [${today}] `)).trim() || today;
 
   const mealTypes: MealType[] = [];
-  if (await askYesNo("¿Quieres incluir desayuno?")) mealTypes.push("desayuno");
-  mealTypes.push("comida");
-  if (await askYesNo("¿Quieres incluir merienda?")) mealTypes.push("merienda");
-  if (await askYesNo("¿Quieres incluir cena?", true)) mealTypes.push("cena");
+  if (await askYesNo("Include breakfast?")) mealTypes.push("breakfast");
+  mealTypes.push("lunch");
+  if (await askYesNo("Include an afternoon snack?")) mealTypes.push("snack");
+  if (await askYesNo("Include dinner?", true)) mealTypes.push("dinner");
 
   return { startsOn, mealTypes };
 }
 
 export async function askFoodPreferences(): Promise<FoodPreferences> {
-  console.log("\nPaso 2 · Selección de platos");
+  console.log("\nStage 2 · Dish selection");
   const restrictions = await cli.question(
-    "¿Tienes restricciones o preferencias alimentarias? [ninguna] ",
+    "Any dietary restrictions or preferences? [none] ",
   );
   return { restrictions: restrictions.trim() };
 }
 
 export async function askRecipeDetail(): Promise<RecipeDetail> {
-  console.log("\nPaso 3 · Recetas");
+  console.log("\nStage 3 · Recipes");
   const answer = (
-    await cli.question("¿Prefieres recetas esquemáticas o detalladas? [esquemáticas] ")
+    await cli.question("Do you prefer concise or detailed recipes? [concise] ")
   )
     .trim()
     .toLowerCase();
-  return answer.startsWith("d") ? "detalladas" : "esquemáticas";
+  return answer.startsWith("d") ? "detailed" : "concise";
 }
 
 export function closeQuestions(): void {

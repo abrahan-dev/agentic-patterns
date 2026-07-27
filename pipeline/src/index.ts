@@ -19,24 +19,24 @@ import { renderHtml } from "./render.ts";
 
 const isDemo = process.argv.includes("--demo");
 const outputDirectory = resolve(import.meta.dir, "../output");
-const outputPath = resolve(outputDirectory, "menu-semanal.html");
+const outputPath = resolve(outputDirectory, "weekly-menu.html");
 
 async function run(): Promise<void> {
   let finalPlan;
 
   if (isDemo) {
-    console.log("Modo demo: se omiten las llamadas a OpenAI.");
+    console.log("Demo mode: skipping OpenAI API calls.");
     finalPlan = demoPlan;
   } else {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error(
-        "Falta OPENAI_API_KEY. Copia .env.example a .env y añade tu clave.",
+        "OPENAI_API_KEY is missing. Copy .env.example to .env and add your key.",
       );
     }
 
     const client = new OpenAI();
 
-    // El patrón pipeline queda explícito: cada salida alimenta la etapa siguiente.
+    // The pipeline remains explicit: each stage feeds the next one.
     const weekPreferences = await askWeekPreferences();
     const skeleton = await createMenuSchema(client, weekPreferences);
 
@@ -47,15 +47,15 @@ async function run(): Promise<void> {
     closeQuestions();
     const planWithRecipes = await addRecipes(client, menu, recipeDetail);
 
-    // Esta etapa no necesita contexto adicional del usuario.
+    // This stage does not need any additional user context.
     finalPlan = await createShoppingList(client, planWithRecipes);
   }
 
   await mkdir(outputDirectory, { recursive: true });
   await Bun.write(outputPath, renderHtml(finalPlan));
-  console.log(`\n✓ HTML generado en ${outputPath}`);
+  console.log(`\n✓ HTML generated at ${outputPath}`);
   await openInDefaultBrowser(outputPath);
-  console.log("✓ Abierto en el navegador predeterminado");
+  console.log("✓ Opened in the default browser");
 }
 
 try {

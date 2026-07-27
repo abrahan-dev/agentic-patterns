@@ -2,24 +2,24 @@ import type { FinalPlan } from "./schemas.ts";
 
 export const demoPlan: FinalPlan = {
   menu: {
-    title: "Una semana mediterránea",
+    title: "A Mediterranean week",
     startsOn: "2026-07-27",
     days: [
-      ["2026-07-27", "lunes", "Ensalada de garbanzos"],
-      ["2026-07-28", "martes", "Arroz con verduras"],
-      ["2026-07-29", "miércoles", "Salmón al horno"],
-      ["2026-07-30", "jueves", "Pasta con tomate y albahaca"],
-      ["2026-07-31", "viernes", "Tortilla de calabacín"],
-      ["2026-08-01", "sábado", "Pollo al limón"],
-      ["2026-08-02", "domingo", "Lentejas con verduras"],
+      ["2026-07-27", "Monday", "Chickpea salad"],
+      ["2026-07-28", "Tuesday", "Vegetable rice"],
+      ["2026-07-29", "Wednesday", "Baked salmon"],
+      ["2026-07-30", "Thursday", "Tomato and basil pasta"],
+      ["2026-07-31", "Friday", "Courgette omelette"],
+      ["2026-08-01", "Saturday", "Lemon chicken"],
+      ["2026-08-02", "Sunday", "Vegetable lentil stew"],
     ].map(([date, dayName, dish]) => ({
       date: date!,
       dayName: dayName!,
       meals: [
         {
-          type: "comida" as const,
+          type: "lunch" as const,
           dish: dish!,
-          description: "Un plato casero, equilibrado y sencillo.",
+          description: "A simple, balanced home-cooked dish.",
         },
       ],
     })),
@@ -27,31 +27,34 @@ export const demoPlan: FinalPlan = {
   recipes: [
     {
       date: "2026-07-27",
-      mealType: "comida",
-      dish: "Ensalada de garbanzos",
+      mealType: "lunch",
+      dish: "Chickpea salad",
       ingredients: [
-        { name: "garbanzos cocidos", quantity: "200 g" },
-        { name: "tomate", quantity: "1 unidad" },
-        { name: "pepino", quantity: "1/2 unidad" },
+        { name: "cooked chickpeas", quantity: "200 g" },
+        { name: "tomato", quantity: "1" },
+        { name: "cucumber", quantity: "1/2" },
       ],
-      steps: ["Lava y corta las verduras.", "Mezcla con los garbanzos y aliña."],
+      steps: [
+        "Wash and chop the vegetables.",
+        "Combine them with the chickpeas and dress the salad.",
+      ],
     },
   ],
   shoppingList: [
     {
-      section: "Fruta y verdura",
+      section: "Produce",
       items: [
-        { name: "tomate", quantity: "6 unidades" },
-        { name: "pepino", quantity: "1 unidad" },
-        { name: "calabacín", quantity: "2 unidades" },
-        { name: "limón", quantity: "2 unidades" },
+        { name: "tomatoes", quantity: "6" },
+        { name: "cucumber", quantity: "1" },
+        { name: "courgettes", quantity: "2" },
+        { name: "lemons", quantity: "2" },
       ],
     },
     {
-      section: "Conservas y legumbres",
+      section: "Tinned goods and pulses",
       items: [
-        { name: "garbanzos cocidos", quantity: "1 bote" },
-        { name: "lentejas", quantity: "250 g" },
+        { name: "cooked chickpeas", quantity: "1 tin" },
+        { name: "lentils", quantity: "250 g" },
       ],
     },
   ],

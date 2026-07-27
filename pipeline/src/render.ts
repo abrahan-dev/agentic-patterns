@@ -44,7 +44,7 @@ export function renderHtml(plan: FinalPlan): string {
           </summary>
           <div class="recipe-body">
             <div>
-              <h4>Ingredientes</h4>
+              <h4>Ingredients</h4>
               <ul>${recipe.ingredients
                 .map(
                   (item) =>
@@ -53,7 +53,7 @@ export function renderHtml(plan: FinalPlan): string {
                 .join("")}</ul>
             </div>
             <div>
-              <h4>Preparación</h4>
+              <h4>Method</h4>
               <ol>${recipe.steps
                 .map((step) => `<li>${escapeHtml(step)}</li>`)
                 .join("")}</ol>
@@ -79,7 +79,7 @@ export function renderHtml(plan: FinalPlan): string {
     .join("");
 
   return `<!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -121,16 +121,16 @@ export function renderHtml(plan: FinalPlan): string {
 </head>
 <body>
   <header>
-    <p class="eyebrow">Pipeline de planificación</p>
+    <p class="eyebrow">Meal-planning pipeline</p>
     <h1>${escapeHtml(plan.menu.title)}</h1>
-    <p>Semana del ${escapeHtml(plan.menu.startsOn)} · Un plan completo, desde el menú hasta el pasillo del hipermercado.</p>
+    <p>Week of ${escapeHtml(plan.menu.startsOn)} · A complete plan, from the first meal idea to the supermarket aisle.</p>
   </header>
   <main>
-    <section class="section"><h2>El menú</h2><div class="days">${menuDays}</div></section>
-    <section class="section"><h2>Las recetas</h2><div class="recipes">${recipes}</div></section>
-    <section class="section"><h2>Lista de la compra</h2><div class="shopping">${shoppingList}</div></section>
+    <section class="section"><h2>Meal plan</h2><div class="days">${menuDays}</div></section>
+    <section class="section"><h2>Recipes</h2><div class="recipes">${recipes}</div></section>
+    <section class="section"><h2>Shopping list</h2><div class="shopping">${shoppingList}</div></section>
   </main>
-  <footer>Generado mediante un pipeline lineal de cuatro etapas con OpenAI.</footer>
+  <footer>Generated with a four-stage linear OpenAI pipeline.</footer>
 </body>
 </html>`;
 }

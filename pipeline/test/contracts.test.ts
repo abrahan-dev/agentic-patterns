@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { assertDishesPreserveSkeleton } from "../src/contracts.ts";
 import { demoPlan } from "../src/demo.ts";
 
-describe("contratos entre etapas", () => {
-  test("acepta un menú que enriquece el esqueleto", () => {
+describe("contracts between stages", () => {
+  test("accepts a meal plan that enriches the skeleton", () => {
     const skeleton = {
       ...demoPlan.menu,
       days: demoPlan.menu.days.map((day) => ({
@@ -16,7 +16,7 @@ describe("contratos entre etapas", () => {
     expect(() => assertDishesPreserveSkeleton(skeleton, demoPlan.menu)).not.toThrow();
   });
 
-  test("rechaza que una etapa cambie una fecha previa", () => {
+  test("rejects a stage that changes a previous date", () => {
     const skeleton = {
       ...demoPlan.menu,
       days: demoPlan.menu.days.map((day) => ({
@@ -29,7 +29,7 @@ describe("contratos entre etapas", () => {
     changed.days[0]!.date = "2099-01-01";
 
     expect(() => assertDishesPreserveSkeleton(skeleton, changed)).toThrow(
-      "Contrato incumplido",
+      "Contract violation",
     );
   });
 });

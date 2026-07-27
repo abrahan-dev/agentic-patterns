@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 export const mealTypeSchema = z.enum([
-  "desayuno",
-  "comida",
-  "merienda",
-  "cena",
+  "breakfast",
+  "lunch",
+  "snack",
+  "dinner",
 ]);
 
 export const menuSlotSchema = z.object({
@@ -12,14 +12,14 @@ export const menuSlotSchema = z.object({
 });
 
 export const daySkeletonSchema = z.object({
-  date: z.string().describe("Fecha ISO YYYY-MM-DD"),
-  dayName: z.string().describe("Nombre del día en español"),
+  date: z.string().describe("ISO date in YYYY-MM-DD format"),
+  dayName: z.string().describe("Day name in English"),
   meals: z.array(menuSlotSchema),
 });
 
 export const menuSkeletonSchema = z.object({
   title: z.string(),
-  startsOn: z.string().describe("Fecha ISO YYYY-MM-DD"),
+  startsOn: z.string().describe("ISO date in YYYY-MM-DD format"),
   days: z.array(daySkeletonSchema).length(7),
 });
 
@@ -83,4 +83,4 @@ export interface FoodPreferences {
   restrictions: string;
 }
 
-export type RecipeDetail = "esquemáticas" | "detalladas";
+export type RecipeDetail = "concise" | "detailed";

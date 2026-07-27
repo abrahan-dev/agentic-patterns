@@ -1,48 +1,52 @@
-# Pipeline LLM: menú semanal
+# LLM Pipeline: Weekly Meal Plan
 
-Ejemplo didáctico de un pipeline lineal con Bun, TypeScript 7 y la Responses API
-de OpenAI. Cada etapa tiene un prompt y un esquema Zod; su salida estructurada es
-la entrada de la siguiente:
+An educational example of a linear pipeline built with Bun, TypeScript 7, and
+the OpenAI Responses API. Each stage has its own prompt and Zod schema, and its
+structured output becomes the input for the next stage:
 
-1. Crear el esqueleto de la semana.
-2. Rellenar los platos.
-3. Añadir las recetas.
-4. Consolidar la lista de la compra por secciones.
+1. Create the weekly meal plan skeleton.
+2. Fill each meal slot with a dish.
+3. Add a recipe for every dish.
+4. Consolidate the shopping list by supermarket section.
 
-Antes de las tres primeras etapas se solicita el contexto que solo esa etapa
-necesita. El resultado se escribe en `output/menu-semanal.html` y se abre en el
-navegador predeterminado.
+Before each of the first three stages, the CLI asks only for the context needed
+by that stage. The result is written to `output/weekly-menu.html` and opened in
+the default browser.
 
-Además de validar la forma con Zod, los contratos entre etapas comprueban que
-una etapa no reescriba el trabajo anterior (por ejemplo, cambiar una fecha al
-añadir las recetas).
+In addition to validating data shapes with Zod, contracts between stages ensure
+that a stage cannot silently rewrite previous work—for example, changing a date
+while adding recipes.
 
-## Preparación
+## Setup
 
 ```bash
 bun install
 cp .env.example .env
 ```
 
-Edita `.env` y añade tu `OPENAI_API_KEY`. Bun carga ese archivo automáticamente.
+Edit `.env` and add your `OPENAI_API_KEY`. Bun loads this file automatically.
+`OPENAI_MODEL` and `OPENAI_REASONING_EFFORT` can be used to tune cost and
+reasoning depth without changing the source code.
 
-## Uso
+## Usage
 
 ```bash
 bun run start
 ```
 
-Para probar el HTML sin clave ni llamadas a la API:
+To test the HTML without an API key or API calls:
 
 ```bash
 bun run demo
 ```
 
-Comprobaciones:
+Checks:
 
 ```bash
 bun run typecheck
 bun test
 ```
 
-El modelo predeterminado es `gpt-5.6-sol`; puede cambiarse con `OPENAI_MODEL`.
+The example configuration uses `gpt-5.4-mini` with `low` reasoning effort.
+Supported reasoning-effort values for this model are `none`, `low`, `medium`,
+`high`, and `xhigh`.

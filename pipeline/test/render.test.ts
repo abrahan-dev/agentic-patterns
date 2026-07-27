@@ -3,15 +3,15 @@ import { demoPlan } from "../src/demo.ts";
 import { renderHtml } from "../src/render.ts";
 
 describe("renderHtml", () => {
-  test("incluye las tres partes del resultado", () => {
+  test("includes all three result sections", () => {
     const html = renderHtml(demoPlan);
 
-    expect(html).toContain("El menú");
-    expect(html).toContain("Las recetas");
-    expect(html).toContain("Lista de la compra");
+    expect(html).toContain("Meal plan");
+    expect(html).toContain("Recipes");
+    expect(html).toContain("Shopping list");
   });
 
-  test("escapa contenido generado por el modelo", () => {
+  test("escapes model-generated content", () => {
     const unsafePlan = structuredClone(demoPlan);
     unsafePlan.menu.title = '<script>alert("xss")</script>';
 

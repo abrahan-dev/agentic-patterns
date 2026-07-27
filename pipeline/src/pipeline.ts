@@ -25,8 +25,10 @@ import {
   assertRecipesPreserveMenu,
   assertShoppingPreservesPlan,
 } from "./contracts.ts";
+import { parseReasoningEffort } from "./config.ts";
 
-const MODEL = process.env.OPENAI_MODEL ?? "gpt-5.6-sol";
+const MODEL = process.env.OPENAI_MODEL ?? "gpt-5.4-mini";
+const REASONING_EFFORT = parseReasoningEffort();
 
 async function runStructuredStep<T>(
   client: OpenAI,
@@ -38,12 +40,12 @@ async function runStructuredStep<T>(
 
   const response = await client.responses.parse({
     model: MODEL,
-    reasoning: { effort: "low" },
+    reasoning: { effort: REASONING_EFFORT },
     input: [
       {
         role: "system",
         content:
-          "Eres un planificador culinario. Sigue el objetivo de la etapa, conserva fielmente el contexto de entrada y responde en español.",
+          "You are a meal-planning assistant. Follow the goal of the current stage, preserve the input context exactly, and respond in English.",
       },
       { role: "user", content: prompt },
     ],
@@ -53,7 +55,7 @@ async function runStructuredStep<T>(
   });
 
   if (!response.output_parsed) {
-    throw new Error(`La etapa "${name}" no devolvió una salida estructurada.`);
+    throw new Error(`Stage "${name}" did not return structured output.`);
   }
 
   console.log(`✓ ${name}`);
