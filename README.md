@@ -8,4 +8,3 @@ AI applications.
 | Pattern | Description | Example |
 | --- | --- | --- |
 | Pipeline | Passes the output of one LLM step to the next. | [Weekly meal plan](./pipeline/) |
-
