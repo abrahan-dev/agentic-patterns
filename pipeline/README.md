@@ -53,11 +53,16 @@ reasoning depth without changing the source code. Bun loads the workspace's
 
 ## Usage
 
+The interactive command must be run from the pipeline workspace so that terminal
+input is forwarded correctly:
+
 ```bash
-bun run --filter pipeline start
+cd pipeline
+bun run start
 ```
 
-To test the HTML without an API key or API calls:
+The non-interactive demo can be run from the repository root with a workspace
+filter:
 
 ```bash
 bun run --filter pipeline demo
