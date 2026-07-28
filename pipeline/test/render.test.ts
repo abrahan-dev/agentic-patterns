@@ -3,6 +3,14 @@ import { demoPlan } from "../src/demo/plan.ts";
 import { renderHtml } from "../src/output/render-html.ts";
 
 describe("renderHtml", () => {
+  test("keeps the versioned demo HTML in sync with the demo plan", async () => {
+    const demoHtml = await Bun.file(
+      new URL("../output/weekly-menu.html", import.meta.url),
+    ).text();
+
+    expect(demoHtml).toBe(renderHtml(demoPlan));
+  });
+
   test("includes all three result sections", () => {
     const html = renderHtml(demoPlan);
 

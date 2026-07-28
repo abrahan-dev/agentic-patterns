@@ -10,8 +10,8 @@ structured output becomes the input for the next stage:
 4. Consolidate the shopping list by supermarket section.
 
 Before each of the first three stages, the CLI asks only for the context needed
-by that stage. The result is written to `output/weekly-menu.html` and opened in
-the default browser.
+by that stage. The result is written to `output/generated-weekly-menu.html` and
+opened in the default browser.
 
 In addition to validating data shapes with Zod, contracts between stages ensure
 that a stage cannot silently rewrite previous work—for example, changing a date
@@ -62,6 +62,10 @@ To test the HTML without an API key or API calls:
 ```bash
 bun run --filter pipeline demo
 ```
+
+The demo uses [`src/demo/plan.ts`](./src/demo/plan.ts) and regenerates the
+versioned [`output/weekly-menu.html`](./output/weekly-menu.html). Real runs use a
+different output filename, so they never overwrite this example.
 
 Checks:
 

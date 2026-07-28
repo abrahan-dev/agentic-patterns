@@ -19,7 +19,8 @@ import { renderHtml } from "./output/render-html.ts";
 
 const isDemo = process.argv.includes("--demo");
 const outputDirectory = resolve(import.meta.dir, "../output");
-const outputPath = resolve(outputDirectory, "weekly-menu.html");
+const outputFileName = isDemo ? "weekly-menu.html" : "generated-weekly-menu.html";
+const outputPath = resolve(outputDirectory, outputFileName);
 
 async function run(): Promise<void> {
   let finalPlan;
