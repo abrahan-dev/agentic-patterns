@@ -12,6 +12,7 @@ const cli = createInterface({ input: stdin, output: stdout });
 async function askYesNo(question: string, defaultValue = false): Promise<boolean> {
   const hint = defaultValue ? "Y/n" : "y/N";
   const answer = (await cli.question(`${question} (${hint}) `)).trim().toLowerCase();
+
   if (!answer) {
     return defaultValue;
   }
@@ -26,13 +27,17 @@ export async function askWeekPreferences(): Promise<WeekPreferences> {
     (await cli.question(`When does the week start? [${today}] `)).trim() || today;
 
   const mealTypes: MealType[] = [];
+
   if (await askYesNo("Include breakfast?")) {
     mealTypes.push("breakfast");
   }
+
   mealTypes.push("lunch");
+
   if (await askYesNo("Include an afternoon snack?")) {
     mealTypes.push("snack");
   }
+
   if (await askYesNo("Include dinner?", true)) {
     mealTypes.push("dinner");
   }

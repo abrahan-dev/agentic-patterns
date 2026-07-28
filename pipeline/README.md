@@ -75,8 +75,9 @@ To apply formatting and automatic lint fixes:
 bun run format
 ```
 
-The style rules require braces around control-flow blocks and a blank line
-before `return` statements when another statement precedes them.
+The style rules require braces around control-flow blocks, blank lines around
+blocks when adjacent statements exist, and a blank line before `return`
+statements when another statement precedes them.
 
 Type checking still runs on TypeScript 7. TypeScript 5 is installed only as a
 compatibility API for lint tooling that does not yet support the TypeScript 7
