@@ -17,6 +17,21 @@ Install all workspace dependencies:
 bun install
 ```
 
+Create the shared environment file and add your OpenAI API key:
+
+```bash
+cp .env.example .env
+```
+
+```dotenv
+OPENAI_API_KEY=your-api-key
+OPENAI_MODEL=gpt-5.4-mini
+OPENAI_REASONING_EFFORT=low
+```
+
+The root `.env` is shared by all examples and is ignored by Git. Never commit
+your API key.
+
 Run formatting, linting, type checks, and tests for every pattern:
 
 ```bash

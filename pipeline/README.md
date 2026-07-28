@@ -40,16 +40,9 @@ src/
 
 ## Setup
 
-```bash
-# From the repository root
-bun install
-cp pipeline/.env.example pipeline/.env
-```
-
-Edit `pipeline/.env` and add your `OPENAI_API_KEY`.
-`OPENAI_MODEL` and `OPENAI_REASONING_EFFORT` can be used to tune cost and
-reasoning depth without changing the source code. Bun loads the workspace's
-`.env` file when its scripts run.
+Complete the shared installation and OpenAI configuration described in the
+[repository README](../README.md). This example loads `OPENAI_API_KEY`,
+`OPENAI_MODEL`, and `OPENAI_REASONING_EFFORT` from the root `.env` file.
 
 ## Usage
 
