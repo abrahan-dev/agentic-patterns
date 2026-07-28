@@ -11,6 +11,16 @@ describe("renderHtml", () => {
     expect(html).toContain("Shopping list");
   });
 
+  test("embeds the decorative food illustration without external assets", () => {
+    const html = renderHtml(demoPlan);
+
+    expect(html).toContain('<svg class="hero-art"');
+    expect(html).toContain(
+      'aria-label="A colorful bowl of vegetables with kitchen utensils"',
+    );
+    expect(html).not.toContain("<img");
+  });
+
   test("escapes model-generated content", () => {
     const unsafePlan = structuredClone(demoPlan);
     unsafePlan.menu.title = '<script>alert("xss")</script>';
