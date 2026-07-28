@@ -451,16 +451,23 @@ export function renderHtml(plan: FinalPlan): string {
     }
 
     .shopping-section li {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
       gap: 16px;
-      justify-content: space-between;
+      align-items: start;
       padding: 10px 0;
       border-top: 1px dashed rgba(38, 50, 56, 0.28);
     }
 
+    .shopping-section li > span,
+    .shopping-section li > strong {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
     .shopping-section strong {
       color: var(--plum);
-      white-space: nowrap;
+      text-align: right;
     }
 
     footer {
