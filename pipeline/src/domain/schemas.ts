@@ -1,12 +1,7 @@
 import { z } from "zod";
 
 // Domain schemas define the data contract shared by every pipeline stage.
-export const mealTypeSchema = z.enum([
-  "breakfast",
-  "lunch",
-  "snack",
-  "dinner",
-]);
+export const mealTypeSchema = z.enum(["breakfast", "lunch", "snack", "dinner"]);
 
 export const menuSlotSchema = z.object({
   type: mealTypeSchema,

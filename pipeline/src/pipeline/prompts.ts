@@ -29,10 +29,7 @@ INPUT SKELETON:
 ${JSON_CONTEXT(skeleton)}`;
 }
 
-export function recipesPrompt(
-  menu: PlannedMenu,
-  detail: RecipeDetail,
-): string {
+export function recipesPrompt(menu: PlannedMenu, detail: RecipeDetail): string {
   return `Add one recipe for every dish in the meal plan.
 Recipes must be ${detail}, suitable for home cooking, and possible with standard kitchen equipment.
 Preserve the input meal plan without changes. Each recipe must be linked by date, meal type, and dish.

@@ -64,9 +64,23 @@ bun run demo
 Checks:
 
 ```bash
+bun run format:check
 bun run typecheck
 bun test
 ```
+
+To apply formatting and automatic lint fixes:
+
+```bash
+bun run format
+```
+
+The style rules require braces around control-flow blocks and a blank line
+before `return` statements when another statement precedes them.
+
+Type checking still runs on TypeScript 7. TypeScript 5 is installed only as a
+compatibility API for lint tooling that does not yet support the TypeScript 7
+compiler API.
 
 The example configuration uses `gpt-5.4-mini` with `low` reasoning effort.
 Supported reasoning-effort values for this model are `none`, `low`, `medium`,

@@ -14,12 +14,7 @@ import {
   type RecipeDetail,
   type WeekPreferences,
 } from "../domain/schemas.ts";
-import {
-  dishesPrompt,
-  recipesPrompt,
-  schemaPrompt,
-  shoppingPrompt,
-} from "./prompts.ts";
+import { dishesPrompt, recipesPrompt, schemaPrompt, shoppingPrompt } from "./prompts.ts";
 import {
   assertDishesPreserveSkeleton,
   assertRecipesPreserveMenu,
@@ -59,6 +54,7 @@ async function runStructuredStep<T>(
   }
 
   console.log(`✓ ${name}`);
+
   return response.output_parsed;
 }
 
@@ -86,6 +82,7 @@ export async function fillDishes(
     plannedMenuSchema,
   );
   assertDishesPreserveSkeleton(skeleton, menu);
+
   return menu;
 }
 
@@ -101,6 +98,7 @@ export async function addRecipes(
     menuWithRecipesSchema,
   );
   assertRecipesPreserveMenu(menu, plan);
+
   return plan;
 }
 
@@ -115,5 +113,6 @@ export async function createShoppingList(
     finalPlanSchema,
   );
   assertShoppingPreservesPlan(plan, finalPlan);
+
   return finalPlan;
 }

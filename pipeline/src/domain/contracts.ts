@@ -1,10 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
-import type {
-  FinalPlan,
-  MenuSkeleton,
-  MenuWithRecipes,
-  PlannedMenu,
-} from "./schemas.ts";
+import type { FinalPlan, MenuSkeleton, MenuWithRecipes, PlannedMenu } from "./schemas.ts";
 
 function fail(stage: string, detail: string): never {
   throw new Error(`Contract violation in ${stage}: ${detail}`);
