@@ -19,8 +19,7 @@ export function renderHtml(plan: FinalPlan): string {
       (day) => `
         <article class="day">
           <p class="eyebrow">${escapeHtml(day.date)}</p>
-          <h3>${escapeHtml(day.dayName)}</h3>
-          ${day.meals
+          <h3>${escapeHtml(day.dayName)}</h3>${day.meals
             .map(
               (meal) => `
                 <div class="meal">
