@@ -1,30 +1,16 @@
 {
-  "name": "weekly-menu-pipeline",
+  "name": "pipeline",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",
     "demo": "bun run src/index.ts --demo",
-    "format": "eslint . --fix && prettier --write .",
-    "format:check": "prettier --check . && eslint .",
-    "check": "bun run format:check && bun run typecheck && bun test",
-    "typecheck": "bun node_modules/@typescript/native/bin/tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
   "dependencies": {
     "openai": "^6.49.0",
     "zod": "^4.4.3"
-  },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@stylistic/eslint-plugin": "^5.10.0",
-    "@types/bun": "latest",
-    "@typescript/native": "npm:typescript@^7.0.2",
-    "eslint": "^10.8.0",
-    "eslint-config-prettier": "^10.1.8",
-    "prettier": "^3.9.6",
-    "typescript": "5.9.3",
-    "typescript-eslint": "^8.65.0"
   }
 }

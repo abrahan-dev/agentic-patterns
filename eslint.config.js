@@ -5,7 +5,7 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["output/**"],
+    ignores: ["**/output/*.html"],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,

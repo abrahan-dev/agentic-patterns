@@ -41,32 +41,32 @@ src/
 ## Setup
 
 ```bash
+# From the repository root
 bun install
-cp .env.example .env
+cp pipeline/.env.example pipeline/.env
 ```
 
-Edit `.env` and add your `OPENAI_API_KEY`. Bun loads this file automatically.
+Edit `pipeline/.env` and add your `OPENAI_API_KEY`.
 `OPENAI_MODEL` and `OPENAI_REASONING_EFFORT` can be used to tune cost and
-reasoning depth without changing the source code.
+reasoning depth without changing the source code. Bun loads the workspace's
+`.env` file when its scripts run.
 
 ## Usage
 
 ```bash
-bun run start
+bun run --filter pipeline start
 ```
 
 To test the HTML without an API key or API calls:
 
 ```bash
-bun run demo
+bun run --filter pipeline demo
 ```
 
 Checks:
 
 ```bash
-bun run format:check
-bun run typecheck
-bun test
+bun run check
 ```
 
 To apply formatting and automatic lint fixes:
