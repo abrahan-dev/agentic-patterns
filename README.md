@@ -5,9 +5,10 @@ AI applications.
 
 ## Patterns
 
-| Pattern  | Description                                    | Example                         |
-| -------- | ---------------------------------------------- | ------------------------------- |
-| Pipeline | Passes the output of one LLM step to the next. | [Weekly meal plan](./pipeline/) |
+| Pattern  | Description                                             | Example                         |
+| -------- | ------------------------------------------------------- | ------------------------------- |
+| Pipeline | Passes the output of one LLM step to the next.          | [Weekly meal plan](./pipeline/) |
+| Router   | Sends a request to the best-matching specialized agent. | [Routed meal plan](./router/)   |
 
 ## Commands
 
