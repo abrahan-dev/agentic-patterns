@@ -28,7 +28,12 @@ cp .env.example .env
 OPENAI_API_KEY=your-api-key
 OPENAI_MODEL=gpt-5.4-mini
 OPENAI_REASONING_EFFORT=low
+ROUTER_CONFIDENCE_THRESHOLD=0.65
 ```
+
+`ROUTER_CONFIDENCE_THRESHOLD` applies to the router example and accepts a value
+from `0` to `1`. Router decisions below that confidence ask the user to clarify
+their answer. The default is `0.65`.
 
 The root `.env` is shared by all examples and is ignored by Git. Never commit
 your API key.

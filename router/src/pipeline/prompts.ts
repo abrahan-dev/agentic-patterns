@@ -28,6 +28,7 @@ export function nutritionPrompt(userMessage: string): string {
   return `Create a concise nutrition specification that a cook can use to design a weekly menu.
 Extract only requirements supported by the user's message. Do not diagnose medical conditions, select dishes, or write recipes.
 Use "general" as the dietary pattern when no specific pattern is requested.
+Express allergens and excluded ingredients as specific ingredient names or recognizable families so they can be checked against recipe ingredients.
 
 USER DIETARY NEEDS:
 ${userMessage}`;
@@ -47,6 +48,7 @@ Strictly respect the nutrition specification, including every allergen and exclu
 Preserve the dates, day names, and meal types from the input skeleton exactly.
 Avoid unnecessary repetition and reuse ingredients where practical to reduce waste.
 The user's cuisine preference was: ${cuisineRequest}.
+Write a one-sentence summary of the completed menu that mentions its culinary style and most important nutrition characteristics.
 
 NUTRITION SPECIFICATION:
 ${JSON_CONTEXT(specification)}
@@ -58,10 +60,12 @@ ${JSON_CONTEXT(skeleton)}`;
 export function recipesPrompt(
   menu: PlannedMenu,
   specification: NutritionSpecification,
+  cuisinePreference: string,
   detail: RecipeDetail,
 ): string {
   return `Create one ${detail} recipe for every dish in the meal plan using your culinary specialty.
 Preserve the input meal plan without changes and continue to respect the nutrition specification.
+Faithfully follow the user's requested cooking style: ${cuisinePreference}.
 Link every recipe by date, meal type, and dish. Use standard home-kitchen equipment.
 Provide useful quantities for one person; the shopping-list stage will consolidate them.
 

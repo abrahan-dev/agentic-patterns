@@ -19,6 +19,15 @@ describe("renderHtml", () => {
     expect(html).toContain("Shopping list");
   });
 
+  test("keeps the pipeline subtitle when no routed metadata exists", () => {
+    const html = renderHtml(demoPlan);
+
+    expect(html).toContain(
+      "A complete plan, from the first meal idea to the supermarket aisle.",
+    );
+    expect(html).not.toContain("Nutrition specification");
+  });
+
   test("embeds the decorative food illustration without external assets", () => {
     const html = renderHtml(demoPlan);
 

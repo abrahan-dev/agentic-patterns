@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { nutritionAgents } from "../src/agents/catalog.ts";
+import { agents, nutritionAgents } from "../src/agents/catalog.ts";
 import { applyConfidenceThreshold, applyRoutingPolicy } from "../src/router/router.ts";
 
 describe("router confidence policy", () => {
@@ -60,5 +60,10 @@ describe("router confidence policy", () => {
 
     expect(route.agent.id).toBe("fallback");
     expect(route.availabilityOverride).toBe(true);
+  });
+
+  test("defines the general cook as the destination for cuisines without a specialist", () => {
+    expect(agents.general_cook.description).toContain("Mexican");
+    expect(agents.general_cook.description).toContain("no dedicated specialist");
   });
 });

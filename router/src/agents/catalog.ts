@@ -62,9 +62,9 @@ export const agents: Record<AgentId, AgentDefinition> = {
     id: "general_cook",
     name: "General cook",
     description:
-      "Selects dishes and creates recipes when no specific cuisine is requested, while respecting the supplied nutrition specification.",
+      "Handles valid cooking-style requests that have no dedicated specialist, such as Mexican, Italian, French, or Middle Eastern cuisine, as well as requests with no specific cuisine. Selects dishes and creates recipes while respecting the requested style and nutrition specification.",
     instructions:
-      "You are a versatile home cook. Select varied dishes and create practical recipes without imposing a specific regional cuisine. Strictly respect the supplied nutrition specification.",
+      "You are a versatile home cook. When the user requests a cuisine without a dedicated specialist, adapt the dishes and recipes faithfully to that culinary style. When no style is requested, create a varied general menu. Strictly respect the supplied nutrition specification.",
   },
   fallback: {
     id: "fallback",

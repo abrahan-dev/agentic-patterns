@@ -66,7 +66,7 @@ async function run(): Promise<void> {
       recipeDetail,
     );
     console.log("\nStage 5 · Shopping list · direct general agent");
-    finalPlan = await createShoppingList(client, planWithRecipes);
+    finalPlan = await createShoppingList(client, planWithRecipes, specification);
   }
 
   await mkdir(outputDirectory, { recursive: true });

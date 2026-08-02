@@ -14,6 +14,8 @@ export const demoPlan: FinalPlan = {
   menu: {
     title: "Mediterranean weekly menu",
     startsOn: "2026-08-03",
+    summary:
+      "A balanced Mediterranean lunch menu built around vegetables, legumes, whole grains, and varied protein sources.",
     days: dishes.map(([date, dayName, dish]) => ({
       date,
       dayName,
@@ -54,4 +56,16 @@ export const demoPlan: FinalPlan = {
       ],
     },
   ],
+  nutritionSpecification: {
+    summary:
+      "Prioritize varied vegetables, legumes, whole grains, and balanced protein throughout the week.",
+    dietaryPattern: "Mediterranean",
+    goals: ["balanced everyday nutrition", "variety across the week"],
+    allergens: [],
+    excludedIngredients: [],
+    recommendations: [
+      "Use extra-virgin olive oil as the primary added fat",
+      "Combine plant and animal protein sources across the week",
+    ],
+  },
 };

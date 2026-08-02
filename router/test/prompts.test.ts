@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { cuisineRoutingInput, nutritionRoutingInput } from "../src/pipeline/prompts.ts";
+import { demoPlan } from "../src/demo/plan.ts";
+import {
+  cuisineRoutingInput,
+  nutritionRoutingInput,
+  recipesPrompt,
+} from "../src/pipeline/prompts.ts";
 
 describe("routing inputs", () => {
   test("routes only the user's raw stage-2 answer", () => {
@@ -23,5 +28,25 @@ describe("routing inputs", () => {
 
   test("uses the general cook for an empty cuisine preference", () => {
     expect(cuisineRoutingInput(" ")).toContain("general cooking style");
+  });
+
+  test("carries an unsupported-but-valid cuisine into recipe generation", () => {
+    const prompt = recipesPrompt(
+      demoPlan.menu,
+      {
+        summary: "General balanced menu",
+        dietaryPattern: "general",
+        goals: [],
+        allergens: [],
+        excludedIngredients: [],
+        recommendations: [],
+      },
+      "Mexican cuisine",
+      "concise",
+    );
+
+    expect(prompt).toContain(
+      "Faithfully follow the user's requested cooking style: Mexican cuisine.",
+    );
   });
 });

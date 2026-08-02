@@ -122,7 +122,7 @@ export async function askCuisinePreference(): Promise<string> {
   console.log("\nStage 3 · Cuisine and dish selection · routed");
 
   return cli.question(
-    "What cooking style would you like: Mediterranean, Asian, or general? [general] ",
+    "What cooking style would you like? Mediterranean, Asian, Mexican, or any other style. [general] ",
   );
 }
 

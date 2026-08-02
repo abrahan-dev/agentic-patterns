@@ -17,6 +17,26 @@ describe("renderHtml", () => {
     expect(html).toContain("Meal plan");
     expect(html).toContain("Recipes");
     expect(html).toContain("Shopping list");
+    expect(html).toContain("Nutrition specification");
+  });
+
+  test("uses the cook's menu summary in the hero", () => {
+    const html = renderHtml(demoPlan);
+
+    expect(html).toContain(demoPlan.menu.summary);
+    expect(html).not.toContain(
+      "A complete plan, from the first meal idea to the supermarket aisle.",
+    );
+  });
+
+  test("renders non-empty nutrition fields and omits empty ones", () => {
+    const html = renderHtml(demoPlan);
+
+    expect(html).toContain("Dietary pattern");
+    expect(html).toContain("Mediterranean");
+    expect(html).toContain("balanced everyday nutrition");
+    expect(html).not.toContain("<h3>Allergens</h3>");
+    expect(html).not.toContain("<h3>Excluded ingredients</h3>");
   });
 
   test("uses the same visual presentation as the pipeline pattern", () => {
@@ -31,6 +51,8 @@ describe("renderHtml", () => {
   test("escapes model-generated content", () => {
     const plan = structuredClone(demoPlan);
     plan.menu.title = "<script>alert('xss')</script>";
+    plan.menu.summary = "<script>summary</script>";
+    plan.nutritionSpecification.summary = "<script>nutrition</script>";
     const html = renderHtml(plan);
 
     expect(html).not.toContain("<script>");

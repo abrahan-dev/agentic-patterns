@@ -1,5 +1,19 @@
 import type { FinalPlan } from "../domain/schemas.ts";
 
+interface NutritionPresentation {
+  summary: string;
+  dietaryPattern: string;
+  goals: string[];
+  allergens: string[];
+  excludedIngredients: string[];
+  recommendations: string[];
+}
+
+type EnhancedFinalPlan = FinalPlan & {
+  menu: FinalPlan["menu"] & { summary?: string };
+  nutritionSpecification?: NutritionPresentation;
+};
+
 const escapeHtml = (value: string): string =>
   value.replace(
     /[&<>"']/g,
@@ -14,6 +28,15 @@ const escapeHtml = (value: string): string =>
   );
 
 export function renderHtml(plan: FinalPlan): string {
+  const enhancedPlan = plan as EnhancedFinalPlan;
+  const nutrition = enhancedPlan.nutritionSpecification;
+  const menuSummary =
+    enhancedPlan.menu.summary?.trim() ||
+    "A complete plan, from the first meal idea to the supermarket aisle.";
+  const patternLabel = nutrition ? "Meal-planning router" : "Meal-planning pipeline";
+  const footerText = nutrition
+    ? "Generated with nutrition and cuisine routers using specialized OpenAI agents."
+    : "Generated with a four-stage linear OpenAI pipeline.";
   const menuDays = plan.menu.days
     .map(
       (day) => `
@@ -76,6 +99,38 @@ export function renderHtml(plan: FinalPlan): string {
         </section>`,
     )
     .join("");
+
+  const nutritionSection = nutrition
+    ? (() => {
+        const fields = [
+          { label: "Dietary pattern", values: [nutrition.dietaryPattern] },
+          { label: "Goals", values: nutrition.goals },
+          { label: "Allergens", values: nutrition.allergens },
+          { label: "Excluded ingredients", values: nutrition.excludedIngredients },
+          { label: "Recommendations", values: nutrition.recommendations },
+        ].filter((field) => field.values.some((value) => value.trim()));
+
+        return `
+    <section class="section">
+      <div class="section-heading"><span class="section-number">4</span><h2>Nutrition specification</h2></div>
+      <article class="nutrition-report">
+        <p class="nutrition-summary">${escapeHtml(nutrition.summary)}</p>
+        <div class="nutrition-grid">${fields
+          .map(
+            (field) => `
+          <section class="nutrition-card">
+            <h3>${escapeHtml(field.label)}</h3>
+            <ul>${field.values
+              .filter((value) => value.trim())
+              .map((value) => `<li>${escapeHtml(value)}</li>`)
+              .join("")}</ul>
+          </section>`,
+          )
+          .join("")}</div>
+      </article>
+    </section>`;
+      })()
+    : "";
 
   return `<!doctype html>
 <html lang="en">
@@ -469,6 +524,50 @@ export function renderHtml(plan: FinalPlan): string {
       text-align: right;
     }
 
+    .nutrition-report {
+      padding: clamp(24px, 4vw, 42px);
+      background: linear-gradient(135deg, #fff8dd, #e7f7eb);
+      border: 2px solid var(--ink);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .nutrition-summary {
+      max-width: 850px;
+      margin: 0 0 28px;
+      font-size: clamp(1.15rem, 2vw, 1.45rem);
+      font-weight: 750;
+    }
+
+    .nutrition-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .nutrition-card {
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 2px solid var(--ink);
+      border-radius: 20px;
+    }
+
+    .nutrition-card h3 {
+      margin: 0 0 10px;
+      color: var(--plum);
+      font-size: 1rem;
+      text-transform: uppercase;
+    }
+
+    .nutrition-card ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .nutrition-card li + li {
+      margin-top: 7px;
+    }
+
     footer {
       padding: 34px;
       color: white;
@@ -530,9 +629,9 @@ export function renderHtml(plan: FinalPlan): string {
   <header>
     <div class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">Meal-planning pipeline</p>
+        <p class="eyebrow">${patternLabel}</p>
         <h1>${escapeHtml(plan.menu.title)}</h1>
-        <p>Week of ${escapeHtml(plan.menu.startsOn)} · A complete plan, from the first meal idea to the supermarket aisle.</p>
+        <p>Week of ${escapeHtml(plan.menu.startsOn)} · ${escapeHtml(menuSummary)}</p>
       </div>
       <svg class="hero-art" viewBox="0 0 520 390" role="img" aria-label="A colorful bowl of vegetables with kitchen utensils">
         <path d="M80 86C123 22 211 7 283 32c62 21 102 3 154 35 63 38 68 139 17 200-44 52-73 99-155 107-93 9-204-20-237-96-28-64-21-134 18-192Z" fill="#fff8dd" stroke="#263238" stroke-width="5"/>
@@ -576,9 +675,9 @@ export function renderHtml(plan: FinalPlan): string {
     <section class="section">
       <div class="section-heading"><span class="section-number">3</span><h2>Shopping list</h2></div>
       <div class="shopping">${shoppingList}</div>
-    </section>
+    </section>${nutritionSection}
   </main>
-  <footer>Generated with a four-stage linear OpenAI pipeline.</footer>
+  <footer>${footerText}</footer>
 </body>
 </html>`;
 }

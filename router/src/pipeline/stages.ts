@@ -1,10 +1,10 @@
 import OpenAI from "openai";
 import {
-  finalPlanSchema,
   menuSkeletonSchema,
   menuWithRecipesSchema,
   nutritionSpecificationSchema,
   plannedMenuSchema,
+  shoppingPlanSchema,
   type FinalPlan,
   type MenuSkeleton,
   type MenuWithRecipes,
@@ -17,6 +17,8 @@ import {
 import {
   assertDishesPreserveSkeleton,
   assertRecipesPreserveMenu,
+  assertRecipesRespectNutrition,
+  assertSkeletonMatchesPreferences,
   assertShoppingPreservesPlan,
 } from "../domain/contracts.ts";
 import {
@@ -27,6 +29,7 @@ import {
 } from "../agents/catalog.ts";
 import { runFallbackAgent, runStructuredAgent } from "../agents/run-agent.ts";
 import { routeRequest } from "../router/router.ts";
+import type { RouteResult } from "../router/router.ts";
 import {
   cuisineRoutingInput,
   dishesPrompt,
@@ -40,6 +43,7 @@ import {
 export interface RoutedMenu {
   menu: PlannedMenu;
   cook: AgentDefinition;
+  cuisinePreference: string;
 }
 
 async function reportUnrelatedAnswer(
@@ -47,26 +51,65 @@ async function reportUnrelatedAnswer(
   userMessage: string,
   expectedTopic: string,
 ): Promise<void> {
-  const fallback = await runFallbackAgent(client, userMessage, expectedTopic);
+  try {
+    const fallback = await runFallbackAgent(client, userMessage, expectedTopic);
 
-  console.error(
-    `\n⚠ The detected topic "${fallback.topic}" does not match this question.`,
-  );
-  console.error(`  ${fallback.message}`);
+    console.error(
+      `\n⚠ The detected topic "${fallback.topic}" does not match this question.`,
+    );
+    console.error(`  ${fallback.message}`);
+  } catch {
+    console.error("\n⚠ This answer does not match the current question.");
+    console.error("  The fallback could not provide a more specific explanation.");
+  }
+
   console.error("  Please enter the requested information and try again.");
 }
 
-export function createMenuSchema(
+async function reportRejectedRoute(
+  client: OpenAI,
+  route: RouteResult,
+  userMessage: string,
+  expectedTopic: string,
+): Promise<void> {
+  if (route.thresholdApplied) {
+    const confidence = Math.round(route.decision.confidence * 100);
+
+    console.error(
+      `\n⚠ The router could not classify this answer confidently (${confidence}%).`,
+    );
+    console.error(`  ${route.decision.reason}`);
+    console.error(`  Please clarify your answer about ${expectedTopic}.`);
+
+    return;
+  }
+
+  if (route.availabilityOverride) {
+    console.error(
+      `\n⚠ The selected destination "${route.decision.destination}" is not available for this question.`,
+    );
+    console.error(`  Please answer with information about ${expectedTopic}.`);
+
+    return;
+  }
+
+  await reportUnrelatedAnswer(client, userMessage, expectedTopic);
+}
+
+export async function createMenuSchema(
   client: OpenAI,
   preferences: WeekPreferences,
 ): Promise<MenuSkeleton> {
-  return runStructuredAgent(
+  const skeleton = await runStructuredAgent(
     client,
     generalAgent,
     "menu_skeleton",
     schemaPrompt(preferences),
     menuSkeletonSchema,
   );
+  assertSkeletonMatchesPreferences(preferences, skeleton);
+
+  return skeleton;
 }
 
 export async function createNutritionSpecification(
@@ -77,8 +120,9 @@ export async function createNutritionSpecification(
   const route = await routeRequest(client, userMessage, nutritionAgents);
 
   if (route.agent.id === "fallback") {
-    await reportUnrelatedAnswer(
+    await reportRejectedRoute(
       client,
+      route,
       userMessage,
       "diet type, allergies, dietary restrictions, or nutrition goals",
     );
@@ -109,10 +153,11 @@ export async function fillDishes(
   const route = await routeRequest(client, userMessage, cookAgents);
 
   if (route.agent.id === "fallback") {
-    await reportUnrelatedAnswer(
+    await reportRejectedRoute(
       client,
+      route,
       userMessage,
-      "a Mediterranean, Asian, or general cooking-style preference",
+      "a cooking-style or cuisine preference",
     );
 
     return undefined;
@@ -127,7 +172,7 @@ export async function fillDishes(
   );
   assertDishesPreserveSkeleton(skeleton, menu);
 
-  return { menu, cook: route.agent };
+  return { menu, cook: route.agent, cuisinePreference: userMessage };
 }
 
 export async function addRecipes(
@@ -140,10 +185,11 @@ export async function addRecipes(
     client,
     routedMenu.cook,
     "menu_with_recipes",
-    recipesPrompt(routedMenu.menu, specification, detail),
+    recipesPrompt(routedMenu.menu, specification, routedMenu.cuisinePreference, detail),
     menuWithRecipesSchema,
   );
   assertRecipesPreserveMenu(routedMenu.menu, plan);
+  assertRecipesRespectNutrition(specification, plan);
 
   return plan;
 }
@@ -151,15 +197,16 @@ export async function addRecipes(
 export async function createShoppingList(
   client: OpenAI,
   plan: MenuWithRecipes,
+  specification: NutritionSpecification,
 ): Promise<FinalPlan> {
-  const finalPlan = await runStructuredAgent(
+  const shoppingPlan = await runStructuredAgent(
     client,
     generalAgent,
     "final_weekly_plan",
     shoppingPrompt(plan),
-    finalPlanSchema,
+    shoppingPlanSchema,
   );
-  assertShoppingPreservesPlan(plan, finalPlan);
+  assertShoppingPreservesPlan(plan, shoppingPlan);
 
-  return finalPlan;
+  return { ...shoppingPlan, nutritionSpecification: specification };
 }
