@@ -1,0 +1,16 @@
+{
+  "name": "orchestrator-workers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run --env-file=../.env src/index.ts",
+    "demo": "bun run src/index.ts --demo",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "openai": "^6.49.0",
+    "zod": "^4.4.3"
+  }
+}

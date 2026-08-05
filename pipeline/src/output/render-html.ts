@@ -14,6 +14,11 @@ type EnhancedFinalPlan = FinalPlan & {
   nutritionSpecification?: NutritionPresentation;
 };
 
+export interface RenderPresentation {
+  patternLabel?: string;
+  footerText?: string;
+}
+
 const escapeHtml = (value: string): string =>
   value.replace(
     /[&<>"']/g,
@@ -27,16 +32,23 @@ const escapeHtml = (value: string): string =>
       })[character]!,
   );
 
-export function renderHtml(plan: FinalPlan): string {
+export function renderHtml(
+  plan: FinalPlan,
+  presentation: RenderPresentation = {},
+): string {
   const enhancedPlan = plan as EnhancedFinalPlan;
   const nutrition = enhancedPlan.nutritionSpecification;
   const menuSummary =
     enhancedPlan.menu.summary?.trim() ||
     "A complete plan, from the first meal idea to the supermarket aisle.";
-  const patternLabel = nutrition ? "Meal-planning router" : "Meal-planning pipeline";
-  const footerText = nutrition
-    ? "Generated with nutrition and cuisine routers using specialized OpenAI agents."
-    : "Generated with a four-stage linear OpenAI pipeline.";
+  const patternLabel =
+    presentation.patternLabel ??
+    (nutrition ? "Meal-planning router" : "Meal-planning pipeline");
+  const footerText =
+    presentation.footerText ??
+    (nutrition
+      ? "Generated with nutrition and cuisine routers using specialized OpenAI agents."
+      : "Generated with a four-stage linear OpenAI pipeline.");
   const menuDays = plan.menu.days
     .map(
       (day) => `

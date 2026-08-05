@@ -5,7 +5,8 @@
   "type": "module",
   "workspaces": [
     "pipeline",
-    "router"
+    "router",
+    "orchestrator-workers"
   ],
   "scripts": {
     "format": "eslint . --fix && prettier --write .",
