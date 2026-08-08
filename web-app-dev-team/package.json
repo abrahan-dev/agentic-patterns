@@ -1,0 +1,22 @@
+{
+  "name": "web-app-dev-team",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run --env-file=../.env src/index.ts tmux",
+    "tmux": "bun run --env-file=../.env src/index.ts tmux",
+    "restore": "bun run --env-file=../.env src/index.ts restore",
+    "restore:resume": "bun run --env-file=../.env src/index.ts restore:resume",
+    "restore:status": "bun run --env-file=../.env src/index.ts restore-status",
+    "demo": "bun run src/index.ts demo",
+    "complexity": "eslint src --rule 'complexity: [\"error\", 10]'",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "eslint": "^10.8.0",
+    "typescript-eslint": "^8.65.0",
+    "zod": "^4.4.3"
+  }
+}

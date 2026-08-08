@@ -5,11 +5,12 @@ AI applications.
 
 ## Patterns
 
-| Pattern              | Description                                                  | Example                                       |
-| -------------------- | ------------------------------------------------------------ | --------------------------------------------- |
-| Pipeline             | Passes the output of one LLM step to the next.               | [Weekly meal plan](./pipeline/)               |
-| Router               | Sends a request to the best-matching specialized agent.      | [Routed meal plan](./router/)                 |
-| Orchestrator–Workers | Plans globally, fans out execution, and synthesizes results. | [Parallel meal plan](./orchestrator-workers/) |
+| Pattern              | Description                                                  | Example                                                 |
+| -------------------- | ------------------------------------------------------------ | ------------------------------------------------------- |
+| Pipeline             | Passes the output of one LLM step to the next.               | [Weekly meal plan](./pipeline/)                         |
+| Router               | Sends a request to the best-matching specialized agent.      | [Routed meal plan](./router/)                           |
+| Orchestrator–Workers | Plans globally, fans out execution, and synthesizes results. | [Parallel meal plan](./orchestrator-workers/)           |
+| Web App Dev Team     | Routes seven specialized roles through validated handoffs.   | [Enterprise web app delivery team](./web-app-dev-team/) |
 
 ## Commands
 

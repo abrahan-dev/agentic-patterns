@@ -6,7 +6,8 @@
   "workspaces": [
     "pipeline",
     "router",
-    "orchestrator-workers"
+    "orchestrator-workers",
+    "web-app-dev-team"
   ],
   "scripts": {
     "format": "eslint . --fix && prettier --write .",
