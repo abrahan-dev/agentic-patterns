@@ -1,30 +1,31 @@
 # Agentic Patterns
 
-In this repository, I build small code examples to experiment with patterns for
-AI applications.
+This repository contains small examples of agentic patterns for AI applications.
 
 ## Patterns
 
-| Pattern              | Description                                                  | Example                                                 |
-| -------------------- | ------------------------------------------------------------ | ------------------------------------------------------- |
-| Pipeline             | Passes the output of one LLM step to the next.               | [Weekly meal plan](./pipeline/)                         |
-| Router               | Sends a request to the best-matching specialized agent.      | [Routed meal plan](./router/)                           |
-| Orchestrator–Workers | Plans globally, fans out execution, and synthesizes results. | [Parallel meal plan](./orchestrator-workers/)           |
-| Web App Dev Team     | Routes seven specialized roles through validated handoffs.   | [Enterprise web app delivery team](./web-app-dev-team/) |
+| Pattern              | Description                                                         | Example                                        |
+| -------------------- | ------------------------------------------------------------------- | ---------------------------------------------- |
+| Pipeline             | Sends the output of one LLM stage to the next stage.                | [Weekly meal plan](./pipeline/)                |
+| Router               | Sends a request to the applicable specialist agent.                 | [Routed meal plan](./router/)                  |
+| Orchestrator–Workers | Plans the work, runs workers in parallel, and combines the results. | [Parallel meal plan](./orchestrator-workers/)  |
+| Web App Dev Team     | Sends work through seven roles with validated handoffs.             | [Enterprise web app team](./web-app-dev-team/) |
 
-## Commands
+## Setup
 
-Install all workspace dependencies:
+Install the workspace dependencies:
 
 ```bash
 bun install
 ```
 
-Create the shared environment file and add your OpenAI API key:
+Create the shared environment file:
 
 ```bash
 cp .env.example .env
 ```
+
+Add your OpenAI API key and configuration:
 
 ```dotenv
 OPENAI_API_KEY=your-api-key
@@ -39,18 +40,16 @@ WORKER_CONCURRENCY=3
 WORKER_MAX_ATTEMPTS=2
 ```
 
-`ROUTER_CONFIDENCE_THRESHOLD` applies to the router example and accepts a value
-from `0` to `1`. Router decisions below that confidence ask the user to clarify
-their answer. The default is `0.65`.
+`ROUTER_CONFIDENCE_THRESHOLD` applies only to the router example. Use a value
+from `0` through `1`. The default value is `0.65`.
 
-The orchestrator and worker settings apply only to the orchestrator–workers
-example. They deliberately assign different model and reasoning tiers to the
-global planning/synthesis role and the parallel recipe workers.
+The orchestrator and worker variables apply only to the orchestrator–workers
+example. They let the two agent types use different models and reasoning levels.
 
-The root `.env` is shared by all examples and is ignored by Git. Never commit
-your API key.
+All examples use the root `.env` file. Git ignores this file. Do not commit your
+API key.
 
-Run formatting, linting, type checks, and tests for every pattern:
+Run all checks:
 
 ```bash
 bun run check

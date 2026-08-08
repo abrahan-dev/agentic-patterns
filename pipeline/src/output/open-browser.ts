@@ -1,6 +1,6 @@
 import { platform } from "node:os";
 
-// Keep platform-specific browser launching outside the application pipeline.
+// Keep platform-specific browser control outside the application pipeline.
 export async function openInDefaultBrowser(filePath: string): Promise<void> {
   const os = platform();
   const command =

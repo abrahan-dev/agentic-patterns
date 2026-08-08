@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
+import { Role } from "../../src/domain/roles.ts";
 import { runLocalCommand, runQualityGate } from "../../src/local/quality-gate.ts";
 import { inspectWorkspace } from "../../src/local/workspace-inspector.ts";
 
@@ -45,7 +46,7 @@ describe("local quality gate commands", () => {
       changedFiles: ["src/changed.ts"],
       turn: 1,
       sequence: 1,
-      role: "backend-coder",
+      role: Role.BackendCoder,
     });
     const legacyChanged = await runQualityGate({
       workspace: root,
@@ -53,7 +54,7 @@ describe("local quality gate commands", () => {
       changedFiles: [legacy],
       turn: 2,
       sequence: 2,
-      role: "backend-coder",
+      role: Role.BackendCoder,
     });
 
     expect(unrelated.passed).toBe(true);
@@ -77,7 +78,7 @@ describe("local quality gate commands", () => {
       changedFiles: [],
       turn: 1,
       sequence: 1,
-      role: "backend-coder",
+      role: Role.BackendCoder,
     });
 
     expect(result.passed).toBe(true);
@@ -103,7 +104,7 @@ describe("local quality gate commands", () => {
       changedFiles: [],
       turn: 1,
       sequence: 1,
-      role: "backend-coder",
+      role: Role.BackendCoder,
     });
 
     expect(result.passed).toBe(false);

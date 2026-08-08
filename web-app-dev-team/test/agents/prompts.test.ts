@@ -4,10 +4,13 @@ import { tmpdir } from "node:os";
 import { basename, resolve } from "node:path";
 import {
   buildAgentPrompt,
+  loadCommunicationStandard,
   loadRoleInstructions,
   roleInstructionsPath,
 } from "../../src/agents/prompts.ts";
 import { roles, type Handoff } from "../../src/domain/schemas.ts";
+import { Role } from "../../src/domain/roles.ts";
+import { TurnDecision } from "../../src/domain/workflow-values.ts";
 import { createRunState, saveRunState } from "../../src/orchestration/run-store.ts";
 
 const temporaryDirectories: string[] = [];
@@ -34,13 +37,20 @@ describe("role instructions", () => {
   }
 
   test("architect policy keeps the opinionated DDD boundaries explicit", async () => {
-    const instructions = await loadRoleInstructions("architect");
+    const instructions = await loadRoleInstructions(Role.Architect);
 
     expect(instructions).toContain("Domain code never imports tRPC");
     expect(instructions).toContain("domain/repositories");
     expect(instructions).toContain("apps/<application-name>");
     expect(instructions).toContain("tRPC v11");
     expect(instructions).toContain("Drizzle ORM");
+  });
+
+  test("loads the shared STE communication standard", async () => {
+    const standard = await loadCommunicationStandard();
+
+    expect(standard).toContain("ASD-STE100 Simplified Technical English");
+    expect(standard).toContain("Use the active voice");
   });
 });
 
@@ -59,13 +69,13 @@ test("projects role-specific context and caches the workspace inventory", async 
   });
   const handoffs = [
     {
-      id: "specifier",
+      id: Role.Specifier,
       sequence: 1,
-      from: "specifier",
-      to: "architect",
+      from: Role.Specifier,
+      to: Role.Architect,
       createdAt: new Date().toISOString(),
       turn: {
-        role: "specifier",
+        role: Role.Specifier,
         featureId: "secret-old-spec",
         summary: "IRRELEVANT_SPECIFIER_HISTORY",
         specification: "Feature: Old",
@@ -73,19 +83,19 @@ test("projects role-specific context and caches the workspace inventory", async 
         outOfScope: [],
         artifacts: [],
         evidence: [],
-        decision: "handoff",
-        nextRole: "architect",
+        decision: TurnDecision.Handoff,
+        nextRole: Role.Architect,
         reason: "ready",
       },
     },
     {
-      id: "architect",
+      id: Role.Architect,
       sequence: 2,
-      from: "architect",
-      to: "backend-coder",
+      from: Role.Architect,
+      to: Role.BackendCoder,
       createdAt: new Date().toISOString(),
       turn: {
-        role: "architect",
+        role: Role.Architect,
         summary: "LATEST_ARCHITECTURE",
         design: "Use a checkout aggregate.",
         changePlan: {
@@ -102,43 +112,45 @@ test("projects role-specific context and caches the workspace inventory", async 
         risks: [],
         artifacts: [],
         evidence: [],
-        decision: "handoff",
-        nextRole: "backend-coder",
+        decision: TurnDecision.Handoff,
+        nextRole: Role.BackendCoder,
         reason: "implement",
       },
     },
     {
-      id: "qa",
+      id: Role.Qa,
       sequence: 3,
-      from: "qa",
-      to: "backend-coder",
+      from: Role.Qa,
+      to: Role.BackendCoder,
       createdAt: new Date().toISOString(),
       turn: {
-        role: "qa",
+        role: Role.Qa,
         summary: "LATEST_QA_FEEDBACK",
         scenariosTested: [],
         commands: [],
         failures: ["Checkout rejects valid carts."],
-        failureOwner: "backend-coder",
+        failureOwner: Role.BackendCoder,
         artifacts: [],
         evidence: [],
-        decision: "handoff",
-        nextRole: "backend-coder",
+        decision: TurnDecision.Handoff,
+        nextRole: Role.BackendCoder,
         reason: "fix",
       },
     },
   ] satisfies Handoff[];
-  created.state.currentRole = "backend-coder";
+  created.state.currentRole = Role.BackendCoder;
   created.state.messages.push(...handoffs);
   await saveRunState(created.runDirectory, created.state);
 
   const prompt = await buildAgentPrompt({
-    role: "backend-coder",
+    role: Role.BackendCoder,
     state: created.state,
     runDirectory: created.runDirectory,
   });
 
   expect(prompt).toContain("LATEST_ARCHITECTURE");
+  expect(prompt).toContain("Required communication standard:");
+  expect(prompt).toContain("ASD-STE100 Simplified Technical English");
   expect(prompt).toContain("LATEST_QA_FEEDBACK");
   expect(prompt).not.toContain("IRRELEVANT_SPECIFIER_HISTORY");
   expect(prompt).toContain("Available scripts: lint, test");

@@ -5,6 +5,12 @@ import { resolve } from "node:path";
 import type { AgentContext, AgentRunner } from "../../src/agents/contracts.ts";
 import { ScriptedAgentRunner } from "../../src/demo/scripted-agent-runner.ts";
 import type { AgentTurn } from "../../src/domain/schemas.ts";
+import { Role } from "../../src/domain/roles.ts";
+import {
+  RunStatus,
+  SpecificationReviewDecision,
+  TurnDecision,
+} from "../../src/domain/workflow-values.ts";
 import { runDevelopmentTeam } from "../../src/orchestration/orchestrator.ts";
 import { createRunState, loadRunState } from "../../src/orchestration/run-store.ts";
 import {
@@ -47,17 +53,17 @@ describe("development team orchestration", () => {
       new FileSpecificationJournal(),
     );
 
-    expect(result.status).toBe("completed");
+    expect(result.status).toBe(RunStatus.Completed);
     expect(result.turns).toBe(7);
     expect(result.messages.map(({ from, to }) => [from, to])).toEqual([
-      ["user", "specifier"],
-      ["specifier", "architect"],
-      ["architect", "ui-designer"],
-      ["ui-designer", "data-engineer"],
-      ["data-engineer", "backend-coder"],
-      ["backend-coder", "frontend-coder"],
-      ["frontend-coder", "qa"],
-      ["qa", null],
+      ["user", Role.Specifier],
+      [Role.Specifier, Role.Architect],
+      [Role.Architect, Role.UiDesigner],
+      [Role.UiDesigner, Role.DataEngineer],
+      [Role.DataEngineer, Role.BackendCoder],
+      [Role.BackendCoder, Role.FrontendCoder],
+      [Role.FrontendCoder, Role.Qa],
+      [Role.Qa, null],
     ]);
     expect(result.specificationReviews).toHaveLength(1);
     expect(result.workspaceBootstrap).toMatchObject({
@@ -65,7 +71,9 @@ describe("development team orchestration", () => {
       template: "enterprise-web-app",
       templateVersion: 1,
     });
-    expect(result.specificationReviews[0]?.decision).toBe("approved");
+    expect(result.specificationReviews[0]?.decision).toBe(
+      SpecificationReviewDecision.Approved,
+    );
     expect(result.specificationReviews[0]?.publishedSpecification?.path).toBe(
       "specifications/000001-deliver-a-generic-feature.feature",
     );
@@ -97,10 +105,10 @@ describe("development team orchestration", () => {
     );
 
     expect(result.tokenTotals.team.totalTokens).toBe(840);
-    expect(result.tokenTotals.byRole.architect.totalTokens).toBe(120);
+    expect(result.tokenTotals.byRole[Role.Architect].totalTokens).toBe(120);
     expect(result.executions).toHaveLength(7);
     const architectLog = await readFile(
-      resolve(directory, "logs", "architect.log"),
+      resolve(directory, "logs", `${Role.Architect}.log`),
       "utf8",
     );
     expect(architectLog).toContain("SPECIFIER → ARCHITECT");
@@ -119,7 +127,7 @@ describe("development team orchestration", () => {
         visited.push(context.role);
         const turn = await scripted.run(context);
 
-        if (turn.role === "architect") {
+        if (turn.role === Role.Architect) {
           return {
             ...turn,
             changePlan: {
@@ -127,12 +135,12 @@ describe("development team orchestration", () => {
               dataRequired: false,
               frontendRequired: false,
             },
-            nextRole: "qa",
+            nextRole: Role.Qa,
           };
         }
 
-        if (turn.role === "backend-coder") {
-          return { ...turn, nextRole: "qa" };
+        if (turn.role === Role.BackendCoder) {
+          return { ...turn, nextRole: Role.Qa };
         }
 
         return turn;
@@ -146,8 +154,8 @@ describe("development team orchestration", () => {
       new FileSpecificationJournal(),
     );
 
-    expect(result.status).toBe("completed");
-    expect(visited).toEqual(["specifier", "architect", "backend-coder", "qa"]);
+    expect(result.status).toBe(RunStatus.Completed);
+    expect(visited).toEqual([Role.Specifier, Role.Architect, Role.BackendCoder, Role.Qa]);
   });
 
   test("fails closed when an agent invents a transition", async () => {
@@ -155,7 +163,7 @@ describe("development team orchestration", () => {
     const invalidRunner: AgentRunner = {
       run: (): Promise<AgentTurn> =>
         Promise.resolve({
-          role: "backend-coder",
+          role: Role.BackendCoder,
           summary: "skip ahead",
           changes: [],
           tests: [],
@@ -163,8 +171,8 @@ describe("development team orchestration", () => {
           domainDecisions: [],
           artifacts: [],
           evidence: [],
-          decision: "handoff",
-          nextRole: "qa",
+          decision: TurnDecision.Handoff,
+          nextRole: Role.Qa,
           reason: "faster",
         }),
     };
@@ -177,14 +185,14 @@ describe("development team orchestration", () => {
         new FileSpecificationJournal(),
       ),
     ).rejects.toThrow("specifier returned a backend-coder turn");
-    expect((await loadRunState(directory)).status).toBe("failed");
+    expect((await loadRunState(directory)).status).toBe(RunStatus.Failed);
   });
 
   test("stops feedback loops at the configured turn budget", async () => {
     const directory = await newRun(2);
     const loopRunner: AgentRunner = {
       run: ({ role }: AgentContext): Promise<AgentTurn> => {
-        if (role === "specifier") {
+        if (role === Role.Specifier) {
           return Promise.resolve({
             role,
             featureId: "clarify-behavior",
@@ -195,14 +203,14 @@ describe("development team orchestration", () => {
             outOfScope: [],
             artifacts: [],
             evidence: [],
-            decision: "handoff",
-            nextRole: "architect",
+            decision: TurnDecision.Handoff,
+            nextRole: Role.Architect,
             reason: "architectural review is needed",
           });
         }
 
         return Promise.resolve({
-          role: "architect",
+          role: Role.Architect,
           summary: "needs specification clarification",
           design: "No design until the ambiguity is resolved.",
           changePlan: {
@@ -219,8 +227,8 @@ describe("development team orchestration", () => {
           risks: ["Ambiguous behavior."],
           artifacts: [],
           evidence: [],
-          decision: "handoff",
-          nextRole: "specifier",
+          decision: TurnDecision.Handoff,
+          nextRole: Role.Specifier,
           reason: "ambiguity remains",
         });
       },
@@ -247,10 +255,10 @@ describe("development team orchestration", () => {
         return Promise.resolve(
           reviewCount === 1
             ? {
-                decision: "changes_requested" as const,
+                decision: SpecificationReviewDecision.ChangesRequested,
                 feedback: "Add an explicit rejected-input example.",
               }
-            : { decision: "approved" as const, feedback: null },
+            : { decision: SpecificationReviewDecision.Approved, feedback: null },
         );
       },
     };
@@ -261,22 +269,22 @@ describe("development team orchestration", () => {
       new FileSpecificationJournal(),
     );
 
-    expect(result.status).toBe("completed");
+    expect(result.status).toBe(RunStatus.Completed);
     expect(result.turns).toBe(8);
     expect(result.specificationReviews.map(({ decision }) => decision)).toEqual([
-      "changes_requested",
-      "approved",
+      SpecificationReviewDecision.ChangesRequested,
+      SpecificationReviewDecision.Approved,
     ]);
     expect(result.specificationReviews[0]?.feedback).toContain("rejected-input");
     expect(result.messages.map(({ from, to }) => [from, to])).toEqual([
-      ["user", "specifier"],
-      ["specifier", "architect"],
-      ["architect", "ui-designer"],
-      ["ui-designer", "data-engineer"],
-      ["data-engineer", "backend-coder"],
-      ["backend-coder", "frontend-coder"],
-      ["frontend-coder", "qa"],
-      ["qa", null],
+      ["user", Role.Specifier],
+      [Role.Specifier, Role.Architect],
+      [Role.Architect, Role.UiDesigner],
+      [Role.UiDesigner, Role.DataEngineer],
+      [Role.DataEngineer, Role.BackendCoder],
+      [Role.BackendCoder, Role.FrontendCoder],
+      [Role.FrontendCoder, Role.Qa],
+      [Role.Qa, null],
     ]);
   });
 
@@ -290,9 +298,9 @@ describe("development team orchestration", () => {
         const turn = await scripted.run(context);
 
         if (
-          context.role === "specifier" &&
+          context.role === Role.Specifier &&
           ++specifierRuns === 1 &&
-          turn.role === "specifier"
+          turn.role === Role.Specifier
         ) {
           return {
             ...turn,
@@ -307,7 +315,10 @@ describe("development team orchestration", () => {
       review() {
         reviews += 1;
 
-        return Promise.resolve({ decision: "approved", feedback: null });
+        return Promise.resolve({
+          decision: SpecificationReviewDecision.Approved,
+          feedback: null,
+        });
       },
     };
 
@@ -340,11 +351,11 @@ describe("development team orchestration", () => {
       async run(context) {
         const turn = await scripted.run(context);
 
-        if (context.role === "qa") {
+        if (context.role === Role.Qa) {
           qaRuns += 1;
         }
 
-        if (context.role !== "backend-coder" || turn.role !== "backend-coder") {
+        if (context.role !== Role.BackendCoder || turn.role !== Role.BackendCoder) {
           return turn;
         }
 
@@ -389,7 +400,7 @@ describe("development team orchestration", () => {
     expect(qaRuns).toBe(1);
     expect(
       result.localChecks
-        .filter(({ kind, role }) => kind === "quality-gate" && role === "backend-coder")
+        .filter(({ kind, role }) => kind === "quality-gate" && role === Role.BackendCoder)
         .map(({ passed }) => passed),
     ).toEqual([false, true]);
   });

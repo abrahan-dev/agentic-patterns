@@ -1,24 +1,23 @@
 # Web App Dev Team
 
-Seven specialized Codex roles build internal business applications through
-schema-validated, deterministic handoffs:
+Seven Codex roles build internal business applications. The orchestrator uses
+validated and deterministic handoffs.
 
 ```text
 specifier -> human review -> architect
 architect -> [ui-designer] -> [data-engineer] -> [backend-coder] -> [frontend-coder] -> QA
 ```
 
-Brackets are conditional. The architect emits `dataRequired`, `backendRequired`
-and `frontendRequired`; the orchestrator calculates the route. Specialists may
-return technical contradictions to the architect. QA is the only role that can
-complete and routes failures to one declared owner.
+Square brackets identify optional roles. The architect sets `dataRequired`,
+`backendRequired`, and `frontendRequired`. The orchestrator calculates the
+route.
 
-After the architect, a versioned local bootstrap creates the fixed boilerplate
-when the target has no project files. Specification and team metadata do not
-make a workspace non-empty. Existing projects are detected conservatively and
-never overwritten. The decision and created-file list are persisted in the run
-state and shown in every tmux pane. A new project is dependency-installed and
-must pass format, lint, typecheck and starter tests before any specialist runs.
+QA is the only role that can complete a run. QA sends each failure to one
+specified owner.
+
+For a new project, a local bootstrap creates the fixed project files. It does
+not replace files in an existing project. It installs the dependencies and runs
+the initial checks before a specialist starts.
 
 ```mermaid
 flowchart TD
@@ -26,9 +25,9 @@ flowchart TD
   S --> H{"Human approval"}
   H -->|Changes| S
   H -->|Approved| A["Architect"]
-  A --> B["Local workspace bootstrap"]
+  A --> B["Local project bootstrap"]
 
-  subgraph I["Conditional implementation path"]
+  subgraph I["Optional implementation path"]
     direction TD
     B --> FR1{"Frontend required?"}
     FR1 -->|Yes| UI["UI designer"]
@@ -46,14 +45,12 @@ flowchart TD
   end
 
   Q -->|Passed| C["Complete"]
-  Q -->|Failure| O["Declared failure owner"]
+  Q -->|Failure| O["Specified failure owner"]
   O --> Q
 ```
 
-The orchestrator skips every optional role not selected by the architect's
-change plan. QA sends a failure to its declared owner, which corrects the change
-before it returns to QA. Any specialist may return a technical contradiction to
-the architect.
+A specialist can send a technical conflict to the architect. The architect
+then changes the technical plan.
 
 ## Product conventions
 
@@ -61,20 +58,22 @@ the architect.
 src/
   contexts/<context>/{application,domain,infrastructure}
   apps/<application-name>/{backend,frontend}
-test/                         # mirrors src/
-drizzle/                      # committed SQL migrations
-.data/                        # ignored SQLite files
+test/                         # Has the same structure as src/
+drizzle/                      # Contains committed SQL migrations
+.data/                        # Contains ignored SQLite files
 ```
 
-The fixed stack is TypeScript 7, Bun, tRPC v11, Zod, generated OpenAPI 3.1 and
-Swagger UI, Drizzle with `bun:sqlite`, React, Vite, TanStack Router/Query,
-Tailwind, shadcn/ui and Playwright. `@trpc/openapi` is intentionally accepted as
-an alpha dependency for internal APIs and should be version-pinned.
+The fixed stack is TypeScript 7, Bun, tRPC v11, Zod, OpenAPI 3.1, Swagger UI,
+Drizzle, `bun:sqlite`, React, Vite, TanStack Router, TanStack Query, Tailwind,
+shadcn/ui, and Playwright.
+
+The internal API uses the alpha `@trpc/openapi` package. Pin its version. Do not
+use this API as a public compatibility contract.
 
 ## Requirements and run
 
-Requires Bun, an authenticated `codex` CLI and tmux. If tmux is missing, startup
-exits before touching the target workspace.
+Install Bun, tmux, and an authenticated `codex` CLI. If tmux is not available,
+the application stops before it changes the target project.
 
 ```bash
 bun run start -- \
@@ -82,15 +81,20 @@ bun run start -- \
   --prompt "Add approval rules to purchase orders"
 ```
 
-Use `--detach` to avoid attaching. The seven role logs remain visible in one
-tiled tmux window. The specifier pauses for `a` (approve) or `c` (request changes).
-Runs live in `<workspace>/.web-app-dev-team/runs/<run-id>/`.
+Use `--detach` to keep the tmux session in the background. The tmux window shows
+the seven role logs. The specifier waits for `a` to approve or `c` to request
+changes.
+
+The application stores runs in
+`<workspace>/.web-app-dev-team/runs/<run-id>/`.
 
 ## Specifications and restitution
 
-Human approval appends immutable Gherkin files and hashes to
-`specifications/manifest.json`. Restitution replays them in creation order,
-without specifier or human review, and checkpoints only after QA:
+After human approval, the application adds an immutable Gherkin file and hash
+to `specifications/manifest.json`.
+
+Restitution implements the specifications in creation order. It does not use
+the specifier or human review. It records a checkpoint only after QA completes.
 
 ```bash
 bun run restore -- \
@@ -101,7 +105,7 @@ bun run restore:resume -- --restore-dir /absolute/path/to/restitution-run
 bun run restore:status -- --restore-dir /absolute/path/to/restitution-run
 ```
 
-Extend an exhausted restitution with `--max-turns 24` on `restore:resume`.
+Use `--max-turns 24` with `restore:resume` to increase an exhausted turn limit.
 
 ## Configuration
 
@@ -112,18 +116,24 @@ WEB_APP_DEV_TEAM_MAX_COMPLEXITY=10
 WEB_APP_DEV_TEAM_ARCHITECTURE_GUARD=on
 ```
 
-Turn-limit precedence is `--max-turns > WEB_APP_DEV_TEAM_MAX_TURNS > 12`.
-One turn is one accepted agent execution; skipped roles consume none. The limit
-applies independently to each restitution specification. A CLI override does
-not modify `.env`.
+The turn-limit precedence is
+`--max-turns > WEB_APP_DEV_TEAM_MAX_TURNS > 12`.
 
-Local structural and complexity checks run after every code-writing specialist.
-Before QA, the gate also runs all available format, lint, typecheck, unit,
-integration and E2E scripts. Failures return to the responsible active role.
+One turn is one accepted agent execution. A skipped role does not use a turn.
+Each restitution specification has a separate turn limit. A CLI option does not
+change `.env`.
+
+After each code-writing role, local checks examine structure and complexity.
+Before QA, the checks also run the available format, lint, typecheck, unit,
+integration, and E2E scripts.
+
+A failed check returns the work to the active role.
 
 ## Customize and verify
 
-Role instructions live in `roles/*.md`; structured outputs live in `schemas/`.
+Role instructions are in `roles/*.md`. Structured output schemas are in
+`schemas/`. The shared communication rules are in
+`config/simplified-technical-english.md`.
 
 ```bash
 bun run demo
@@ -134,15 +144,12 @@ bun test
 
 ## TODO
 
-- Git management: isolated worktrees, branches, commit handoffs, conflict rules
-  and recoverable rollback.
-- DevOps management: CI pipelines, environments, secrets, deployments,
-  observability and rollback verification.
-- Define the data engineer's database access policy: MCP tools, deterministic
-  local scripts, direct read-only inspection and mutation boundaries.
-- Durable inboxes/outboxes, queues and concurrency.
-- Retry policies, cancellation and tmux session recovery.
-- Additional versioned bootstrap templates and safe template upgrades.
-- Project-local stack overrides and additional backends.
-- Optional human gates beyond specification approval.
-- Artifact integrity, retention and cleanup policies.
+- Add Git management for worktrees, branches, commits, conflicts, and rollback.
+- Add DevOps management for CI, environments, secrets, deployments, and rollback.
+- Define how the data engineer gets database access.
+- Add durable inboxes, outboxes, queues, and concurrency.
+- Add retry, cancellation, and tmux recovery policies.
+- Add versioned bootstrap templates and safe template updates.
+- Add project-specific stack configuration and additional backends.
+- Add optional human checks after specification approval.
+- Add artifact integrity, retention, and cleanup policies.

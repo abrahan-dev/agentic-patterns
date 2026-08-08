@@ -1,11 +1,16 @@
 import { expect, test } from "bun:test";
 import { TerminalSpecificationReviewer } from "../../src/cli/terminal-specification-reviewer.ts";
-import type { RunState } from "../../src/domain/schemas.ts";
+import type { RunState, SpecifierTurn } from "../../src/domain/schemas.ts";
+import { Role } from "../../src/domain/roles.ts";
 import { emptyTokenTotals } from "../../src/domain/token-usage.ts";
+import {
+  SpecificationReviewDecision,
+  TurnDecision,
+} from "../../src/domain/workflow-values.ts";
 import type { CommandRunner } from "../../src/ui/tmux.ts";
 
-const specification = {
-  role: "specifier" as const,
+const specification: SpecifierTurn = {
+  role: Role.Specifier,
   featureId: "validate-input",
   summary: "Accept valid input and reject invalid input.",
   specification:
@@ -14,8 +19,8 @@ const specification = {
   outOfScope: [],
   artifacts: [],
   evidence: ["Given invalid input, the operation returns a validation error."],
-  decision: "handoff" as const,
-  nextRole: "architect" as const,
+  decision: TurnDecision.Handoff,
+  nextRole: Role.Architect,
   reason: "The behavior is ready for architectural review.",
 };
 
@@ -40,7 +45,7 @@ test("human approval switches to the review window and back", async () => {
   );
 
   expect(await reviewer.review({ state, specification })).toEqual({
-    decision: "approved",
+    decision: SpecificationReviewDecision.Approved,
     feedback: null,
   });
   expect(commands).toEqual([
@@ -58,7 +63,7 @@ test("human feedback requests another specifier turn", async () => {
   );
 
   expect(await reviewer.review({ state, specification })).toEqual({
-    decision: "changes_requested",
+    decision: SpecificationReviewDecision.ChangesRequested,
     feedback: "Include the empty-input case.",
   });
 });

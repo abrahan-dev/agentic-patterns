@@ -1,16 +1,13 @@
 import { z } from "zod";
+import { Role, roles } from "./roles.ts";
+import {
+  RunStatus,
+  SpecificationReviewDecision as ReviewDecision,
+  TurnDecision,
+} from "./workflow-values.ts";
 
-export const roles = [
-  "specifier",
-  "architect",
-  "ui-designer",
-  "data-engineer",
-  "backend-coder",
-  "frontend-coder",
-  "qa",
-] as const;
 export const roleSchema = z.enum(roles);
-export type Role = z.infer<typeof roleSchema>;
+export { Role, roles } from "./roles.ts";
 export const featureIdSchema = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Must be a lowercase kebab-case ID.");
@@ -23,13 +20,13 @@ const agentTurnBaseSchema = z.object({
 });
 
 export const specifierTurnSchema = agentTurnBaseSchema.extend({
-  role: z.literal("specifier"),
+  role: z.literal(Role.Specifier),
   featureId: featureIdSchema,
   specification: z.string().min(1),
   assumptions: z.array(z.string()),
   outOfScope: z.array(z.string()),
-  decision: z.literal("handoff"),
-  nextRole: z.literal("architect"),
+  decision: z.literal(TurnDecision.Handoff),
+  nextRole: z.literal(Role.Architect),
 });
 export type SpecifierTurn = z.infer<typeof specifierTurnSchema>;
 
@@ -49,7 +46,7 @@ export const changePlanSchema = z
 export type ChangePlan = z.infer<typeof changePlanSchema>;
 
 export const architectTurnSchema = agentTurnBaseSchema.extend({
-  role: z.literal("architect"),
+  role: z.literal(Role.Architect),
   design: z.string().min(1),
   changePlan: changePlanSchema,
   domainModel: z.array(z.string()),
@@ -57,79 +54,79 @@ export const architectTurnSchema = agentTurnBaseSchema.extend({
   security: z.array(z.string()),
   constraints: z.array(z.string()),
   risks: z.array(z.string()),
-  decision: z.literal("handoff"),
+  decision: z.literal(TurnDecision.Handoff),
   nextRole: z.enum([
-    "specifier",
-    "ui-designer",
-    "data-engineer",
-    "backend-coder",
-    "frontend-coder",
-    "qa",
+    Role.Specifier,
+    Role.UiDesigner,
+    Role.DataEngineer,
+    Role.BackendCoder,
+    Role.FrontendCoder,
+    Role.Qa,
   ]),
 });
 export type ArchitectTurn = z.infer<typeof architectTurnSchema>;
 
 export const uiDesignerTurnSchema = agentTurnBaseSchema.extend({
-  role: z.literal("ui-designer"),
+  role: z.literal(Role.UiDesigner),
   screens: z.array(z.string()),
   interactions: z.array(z.string()),
   interfaceStates: z.array(z.string()),
   accessibility: z.array(z.string()),
-  decision: z.literal("handoff"),
+  decision: z.literal(TurnDecision.Handoff),
   nextRole: z.enum([
-    "architect",
-    "data-engineer",
-    "backend-coder",
-    "frontend-coder",
-    "qa",
+    Role.Architect,
+    Role.DataEngineer,
+    Role.BackendCoder,
+    Role.FrontendCoder,
+    Role.Qa,
   ]),
 });
 export type UiDesignerTurn = z.infer<typeof uiDesignerTurnSchema>;
 
 export const dataEngineerTurnSchema = agentTurnBaseSchema.extend({
-  role: z.literal("data-engineer"),
+  role: z.literal(Role.DataEngineer),
   schemaChanges: z.array(z.string()),
   migrations: z.array(z.string()),
   persistenceMappings: z.array(z.string()),
   tests: z.array(z.string()),
-  decision: z.literal("handoff"),
-  nextRole: z.enum(["architect", "backend-coder", "frontend-coder", "qa"]),
+  decision: z.literal(TurnDecision.Handoff),
+  nextRole: z.enum([Role.Architect, Role.BackendCoder, Role.FrontendCoder, Role.Qa]),
 });
 export type DataEngineerTurn = z.infer<typeof dataEngineerTurnSchema>;
 
 export const backendCoderTurnSchema = agentTurnBaseSchema.extend({
-  role: z.literal("backend-coder"),
+  role: z.literal(Role.BackendCoder),
   changes: z.array(z.string()),
   tests: z.array(z.string()),
   apiProcedures: z.array(z.string()),
   domainDecisions: z.array(z.string()),
-  decision: z.literal("handoff"),
-  nextRole: z.enum(["architect", "frontend-coder", "qa"]),
+  decision: z.literal(TurnDecision.Handoff),
+  nextRole: z.enum([Role.Architect, Role.FrontendCoder, Role.Qa]),
 });
 export type BackendCoderTurn = z.infer<typeof backendCoderTurnSchema>;
 
 export const frontendCoderTurnSchema = agentTurnBaseSchema.extend({
-  role: z.literal("frontend-coder"),
+  role: z.literal(Role.FrontendCoder),
   changes: z.array(z.string()),
   tests: z.array(z.string()),
   screens: z.array(z.string()),
   apiUsage: z.array(z.string()),
-  decision: z.literal("handoff"),
-  nextRole: z.enum(["architect", "qa"]),
+  decision: z.literal(TurnDecision.Handoff),
+  nextRole: z.enum([Role.Architect, Role.Qa]),
 });
 export type FrontendCoderTurn = z.infer<typeof frontendCoderTurnSchema>;
 
 export const qaTurnSchema = agentTurnBaseSchema.extend({
-  role: z.literal("qa"),
+  role: z.literal(Role.Qa),
   scenariosTested: z.array(z.string()),
   commands: z.array(z.string()),
   failures: z.array(z.string()),
   failureOwner: z
-    .enum(["architect", "data-engineer", "backend-coder", "frontend-coder"])
+    .enum([Role.Architect, Role.DataEngineer, Role.BackendCoder, Role.FrontendCoder])
     .nullable(),
-  decision: z.enum(["handoff", "complete"]),
+  decision: z.enum(TurnDecision),
   nextRole: z
-    .enum(["architect", "data-engineer", "backend-coder", "frontend-coder"])
+    .enum([Role.Architect, Role.DataEngineer, Role.BackendCoder, Role.FrontendCoder])
     .nullable(),
 });
 export type QaTurn = z.infer<typeof qaTurnSchema>;
@@ -157,13 +154,13 @@ export type TokenUsage = z.infer<typeof tokenUsageSchema>;
 export const tokenTotalsSchema = z.object({
   team: tokenUsageSchema,
   byRole: z.object({
-    specifier: tokenUsageSchema,
-    architect: tokenUsageSchema,
-    "ui-designer": tokenUsageSchema,
-    "data-engineer": tokenUsageSchema,
-    "backend-coder": tokenUsageSchema,
-    "frontend-coder": tokenUsageSchema,
-    qa: tokenUsageSchema,
+    [Role.Specifier]: tokenUsageSchema,
+    [Role.Architect]: tokenUsageSchema,
+    [Role.UiDesigner]: tokenUsageSchema,
+    [Role.DataEngineer]: tokenUsageSchema,
+    [Role.BackendCoder]: tokenUsageSchema,
+    [Role.FrontendCoder]: tokenUsageSchema,
+    [Role.Qa]: tokenUsageSchema,
   }),
 });
 export type TokenTotals = z.infer<typeof tokenTotalsSchema>;
@@ -174,7 +171,7 @@ export const agentExecutionSchema = z.object({
   role: roleSchema,
   startedAt: z.string(),
   completedAt: z.string(),
-  status: z.enum(["completed", "failed"]).default("completed"),
+  status: z.enum([RunStatus.Completed, RunStatus.Failed]).default(RunStatus.Completed),
   usage: tokenUsageSchema.nullable(),
   commands: z
     .array(
@@ -225,11 +222,11 @@ export type WorkspaceBootstrap = z.infer<typeof workspaceBootstrapSchema>;
 
 export const specificationReviewDecisionSchema = z.discriminatedUnion("decision", [
   z.object({
-    decision: z.literal("approved"),
+    decision: z.literal(ReviewDecision.Approved),
     feedback: z.null(),
   }),
   z.object({
-    decision: z.literal("changes_requested"),
+    decision: z.literal(ReviewDecision.ChangesRequested),
     feedback: z.string().min(1),
   }),
 ]);
@@ -255,12 +252,12 @@ const specificationReviewBaseSchema = z.object({
 
 export const specificationReviewSchema = z.discriminatedUnion("decision", [
   specificationReviewBaseSchema.extend({
-    decision: z.literal("approved"),
+    decision: z.literal(ReviewDecision.Approved),
     feedback: z.null(),
     publishedSpecification: publishedSpecificationSchema,
   }),
   specificationReviewBaseSchema.extend({
-    decision: z.literal("changes_requested"),
+    decision: z.literal(ReviewDecision.ChangesRequested),
     feedback: z.string().min(1),
     publishedSpecification: z.null(),
   }),
@@ -292,7 +289,7 @@ export const runStateSchema = z.object({
   id: z.string(),
   prompt: z.string().min(1),
   workspace: z.string().min(1),
-  status: z.enum(["running", "completed", "failed"]),
+  status: z.enum(RunStatus),
   currentRole: roleSchema.nullable(),
   turns: z.number().int().nonnegative(),
   maxTurns: z.number().int().positive(),

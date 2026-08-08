@@ -1,5 +1,6 @@
 import type { AgentRunner } from "../agents/contracts.ts";
 import type { RunState } from "../domain/schemas.ts";
+import { RunStatus } from "../domain/workflow-values.ts";
 import {
   DeterministicWorkspaceBootstrapper,
   type WorkspaceBootstrapper,
@@ -36,7 +37,7 @@ export async function runDevelopmentTeam(
   const attempt = emptyAttemptState(state.currentRole);
 
   try {
-    while (state.status === "running") {
+    while (state.status === RunStatus.Running) {
       assertTurnBudget(state);
       const accepted = await executeAgentTurn({
         runner,

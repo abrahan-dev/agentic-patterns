@@ -5,6 +5,12 @@ import { resolve } from "node:path";
 import type { AgentRunner } from "../../src/agents/contracts.ts";
 import { ScriptedAgentRunner } from "../../src/demo/scripted-agent-runner.ts";
 import type { SpecifierTurn } from "../../src/domain/schemas.ts";
+import { Role } from "../../src/domain/roles.ts";
+import {
+  RestitutionStatus,
+  RunStatus,
+  TurnDecision,
+} from "../../src/domain/workflow-values.ts";
 import { loadRunState } from "../../src/orchestration/run-store.ts";
 import {
   createRestitution,
@@ -32,7 +38,7 @@ async function temporaryRoot(label: string): Promise<string> {
 
 function specification(featureId: string): SpecifierTurn {
   return {
-    role: "specifier",
+    role: Role.Specifier,
     featureId,
     summary: `Specify ${featureId}.`,
     specification: `Feature: ${featureId}\n\n  Scenario: Restore behavior\n    Given an empty application\n    When this change is restored\n    Then its behavior is available`,
@@ -40,8 +46,8 @@ function specification(featureId: string): SpecifierTurn {
     outOfScope: [],
     artifacts: [],
     evidence: ["The outcome is observable."],
-    decision: "handoff",
-    nextRole: "architect",
+    decision: TurnDecision.Handoff,
+    nextRole: Role.Architect,
     reason: "Ready for approval.",
   };
 }
@@ -88,16 +94,16 @@ describe("specification restitution", () => {
     };
     const result = await runRestitution(created.directory, meteredRunner);
 
-    expect(result.status).toBe("completed");
+    expect(result.status).toBe(RestitutionStatus.Completed);
     expect(result.completedSequences).toEqual([1, 2]);
     expect(result.nextSequence).toBe(3);
     expect(result.tokenTotals.team.totalTokens).toBe(120);
-    expect(result.tokenTotals.byRole.architect.totalTokens).toBe(20);
+    expect(result.tokenTotals.byRole[Role.Architect].totalTokens).toBe(20);
     expect(
       JSON.parse(
         await readFile(resolve(created.directory, "results", "000001.json"), "utf8"),
       ),
-    ).toMatchObject({ mode: "restitution", status: "completed" });
+    ).toMatchObject({ mode: "restitution", status: RunStatus.Completed });
     expect(
       await readFile(
         resolve(workspace, "specifications", "000002-second-change.feature"),
@@ -130,13 +136,13 @@ describe("specification restitution", () => {
     };
     const interrupted = await runRestitution(created.directory, quotaFailure);
 
-    expect(interrupted.status).toBe("interrupted");
+    expect(interrupted.status).toBe(RestitutionStatus.Interrupted);
     expect(interrupted.currentSequence).toBe(1);
     expect(interrupted.completedSequences).toEqual([]);
     expect(interrupted.failure).toContain("token quota exhausted");
-    expect(interrupted.resumeRole).toBe("ui-designer");
+    expect(interrupted.resumeRole).toBe(Role.UiDesigner);
     expect((await loadRunState(created.directory)).interruptions).toMatchObject([
-      { role: "ui-designer", reason: "token quota exhausted" },
+      { role: Role.UiDesigner, reason: "token quota exhausted" },
     ]);
     expect(await readFile(resolve(created.directory, "progress.log"), "utf8")).toContain(
       "Interrupted resumable-change at agent ui-designer",
@@ -144,7 +150,7 @@ describe("specification restitution", () => {
 
     const resumed = await runRestitution(created.directory, new ScriptedAgentRunner());
 
-    expect(resumed.status).toBe("completed");
+    expect(resumed.status).toBe(RestitutionStatus.Completed);
     expect(resumed.completedSequences).toEqual([1]);
     expect((await loadRestitutionState(created.directory)).nextSequence).toBe(2);
   });

@@ -5,13 +5,14 @@ import {
   type AgentTurn,
   type Handoff,
   type LocalCheck,
-  type Role,
   type RunState,
   type SpecificationReview,
   type SpecifierTurn,
   type TokenUsage,
   type WorkspaceBootstrap,
 } from "../domain/schemas.ts";
+import { Role } from "../domain/roles.ts";
+import { SpecificationReviewDecision } from "../domain/workflow-values.ts";
 
 const rule = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
 
@@ -37,14 +38,14 @@ function block(title: string, value: string): string {
 
 function deliverable(turn: AgentTurn): string {
   switch (turn.role) {
-    case "specifier":
+    case Role.Specifier:
       return [
         `  Feature: ${turn.featureId}`,
         block("Gherkin", turn.specification),
         lines("Assumptions", turn.assumptions),
         lines("Out of scope", turn.outOfScope),
       ].join("\n");
-    case "architect":
+    case Role.Architect:
       return [
         block("Design", turn.design),
         `  Application: ${turn.changePlan.applicationName}`,
@@ -56,35 +57,35 @@ function deliverable(turn: AgentTurn): string {
         lines("Constraints", turn.constraints),
         lines("Risks", turn.risks),
       ].join("\n");
-    case "ui-designer":
+    case Role.UiDesigner:
       return [
         lines("Screens", turn.screens),
         lines("Interactions", turn.interactions),
         lines("Interface states", turn.interfaceStates),
         lines("Accessibility", turn.accessibility),
       ].join("\n");
-    case "data-engineer":
+    case Role.DataEngineer:
       return [
         lines("Schema", turn.schemaChanges),
         lines("Migrations", turn.migrations),
         lines("Persistence mappings", turn.persistenceMappings),
         lines("Tests", turn.tests),
       ].join("\n");
-    case "backend-coder":
+    case Role.BackendCoder:
       return [
         lines("Changes", turn.changes),
         lines("Tests", turn.tests),
         lines("API procedures", turn.apiProcedures),
         lines("Domain decisions", turn.domainDecisions),
       ].join("\n");
-    case "frontend-coder":
+    case Role.FrontendCoder:
       return [
         lines("Changes", turn.changes),
         lines("Tests", turn.tests),
         lines("Screens", turn.screens),
         lines("API usage", turn.apiUsage),
       ].join("\n");
-    case "qa":
+    case Role.Qa:
       return [
         lines("Scenarios", turn.scenariosTested),
         lines("Commands", turn.commands),
@@ -157,7 +158,7 @@ export async function recordSpecificationReview(
   review: SpecificationReview,
 ): Promise<void> {
   const outcome =
-    review.decision === "approved"
+    review.decision === SpecificationReviewDecision.Approved
       ? `APPROVED  ·  ${review.publishedSpecification.path}`
       : `CHANGES REQUESTED  ·  ${review.feedback}`;
 

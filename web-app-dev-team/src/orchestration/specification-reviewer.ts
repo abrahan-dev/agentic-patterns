@@ -3,6 +3,7 @@ import type {
   SpecifierTurn,
   SpecificationReviewDecision,
 } from "../domain/schemas.ts";
+import { SpecificationReviewDecision as ReviewDecision } from "../domain/workflow-values.ts";
 
 export interface SpecificationReviewContext {
   state: RunState;
@@ -15,6 +16,6 @@ export interface SpecificationReviewer {
 
 export class AutomaticSpecificationReviewer implements SpecificationReviewer {
   review(): Promise<SpecificationReviewDecision> {
-    return Promise.resolve({ decision: "approved", feedback: null });
+    return Promise.resolve({ decision: ReviewDecision.Approved, feedback: null });
   }
 }

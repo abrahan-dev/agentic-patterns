@@ -1,44 +1,38 @@
 # LLM Router: Weekly Meal Plan
 
-An educational multi-router pattern built with Bun, TypeScript 7, Zod, and the
-OpenAI Responses API. The application creates a weekly menu in five stages:
+This example uses Bun, TypeScript 7, Zod, and the OpenAI Responses API. The
+application creates a weekly menu in five stages:
 
-1. A general agent creates the validated weekly structure.
-2. A nutrition router selects a nutritionist, which produces a specification
-   rather than dishes.
-3. A cuisine router selects a cook, which fills the menu while respecting the
-   nutrition specification.
-4. The selected cook creates concise or detailed recipes.
-5. A general agent consolidates the shopping list.
+1. A general agent creates the weekly structure.
+2. A nutrition router selects a nutrition specialist.
+3. A cuisine router selects a cook.
+4. The selected cook creates recipes.
+5. A general agent creates the shopping list.
 
 ## Routers and agents
 
-The nutrition router receives only the user's raw answer about diet, allergies,
-restrictions, or goals. It can select:
+The nutrition router receives the user's answer about diet, allergies,
+restrictions, and goals. It can select:
 
 - `nutritionist`
 - `plant_based_nutritionist`
 - `fallback`
 
-The cuisine router receives only the user's raw cooking-style preference. It
-can select:
+The cuisine router receives the user's cooking-style preference. It can select:
 
 - `mediterranean_cook`
 - `asian_cook`
 - `general_cook`
 - `fallback`
 
-`general_cook` is not limited to users with no preference. It handles valid
-cuisine requests for which there is no dedicated specialist, such as Mexican,
-Italian, French, or Middle Eastern cooking. The original cuisine preference is
-carried into both dish selection and recipe generation. Fallback is reserved
-for answers that are not cooking styles.
+The `general_cook` handles valid cuisines that do not have a specialist. These
+cuisines can include Mexican, Italian, French, and Middle Eastern food.
 
-Every decision contains a destination, confidence from `0` to `1`, and a
-reason. An unrelated message invokes the shared fallback. Confidence below the
-configured `ROUTER_CONFIDENCE_THRESHOLD` asks the user to clarify without
-labelling the topic as unrelated, while an agent unavailable in the current
-stage reports the routing mismatch. The default threshold is `0.65`.
+The `fallback` handles an answer that is not a cooking style. It does not stop
+the workflow. It explains the mismatch, and the CLI asks the question again.
+
+Each router decision contains a destination, a confidence value, and a reason.
+The confidence value is from `0` through `1`.
 
 ```ts
 {
@@ -54,49 +48,44 @@ stage reports the routing mismatch. The default threshold is `0.65`.
 }
 ```
 
-The fallback is non-terminal. It identifies the answer's actual topic, explains
-why it does not match the current question, and the CLI asks that question
-again. For example, a payment complaint entered as a dietary preference does
-not stop the complete workflow. If the fallback explanation call itself fails,
-a local generic explanation preserves the retry.
+If confidence is below `ROUTER_CONFIDENCE_THRESHOLD`, the CLI asks for more
+information. The default threshold is `0.65`.
 
 ## Flow
 
 ```text
-Stage 1 ──> general agent ─────────────────────────────> menu skeleton
+Stage 1 ──> general agent ─────────────────────────────> menu structure
 
-Stage 2 ──> nutrition router ─┬─> general nutritionist ─> nutrition spec
-                              ├─> plant-based specialist ─> nutrition spec
-                              └─> fallback ──────────────> explain + retry
+Stage 2 ──> nutrition router ─┬─> nutritionist ─────────> nutrition specification
+                              ├─> plant specialist ─────> nutrition specification
+                              └─> fallback ─────────────> explanation and retry
 
-Stage 3 ──> cuisine router ───┬─> Mediterranean cook ───> dishes
-                              ├─> Asian cook ────────────> dishes
-                              ├─> general cook ──────────> dishes
-                              └─> fallback ──────────────> explain + retry
+Stage 3 ──> cuisine router ───┬─> Mediterranean cook ──> dishes
+                              ├─> Asian cook ───────────> dishes
+                              ├─> general cook ─────────> dishes
+                              └─> fallback ─────────────> explanation and retry
 
 Stage 4 ──> selected cook ─────────────────────────────> recipes
 Stage 5 ──> general agent ─────────────────────────────> shopping list
 ```
 
-The cook also returns a one-sentence menu summary during stage 3. The final HTML
-uses it in the hero instead of a generic subtitle. The original structured
-nutrition specification is attached after stage 5 and rendered as the final
-section, omitting empty fields such as allergens when none were reported.
+The selected cook also supplies a one-sentence menu summary. The final HTML
+uses this summary as its subtitle. It also shows the nutrition specification.
 
-Only raw user answers are classified. Full stage instructions, the menu
-skeleton, and prior structured results are supplied after routing to the chosen
-specialist. This avoids biasing a router with application context.
+The router classifies only the user answer. It does not receive the application
+instructions or prior results. The selected specialist receives that context
+after routing.
 
-Stage 1 validates real `YYYY-MM-DD` dates and exact yes/no responses. Stage 4
-accepts only `concise`, `detailed`, or an empty answer for the concise default;
-invalid input repeats the question without an API call.
+Stage 1 accepts valid `YYYY-MM-DD` dates and exact yes-or-no answers. Stage 4
+accepts `concise`, `detailed`, or an empty answer. An empty answer selects
+`concise`.
 
-Contracts also validate that the generated seven-day skeleton exactly matches
-the requested dates and meal slots. Before creating the shopping list, recipe
-ingredients are checked against explicit allergens, exclusions, and common
-ingredient families from the nutrition specification. This deterministic check
-is a guardrail for the example, not a substitute for production allergy-safety
-controls.
+Contracts make sure that the seven-day structure has the requested dates and
+meal positions. A deterministic check also compares recipe ingredients with
+the specified allergens and exclusions.
+
+This check is an example guardrail. It is not a production allergy-safety
+control.
 
 ## Project structure
 
@@ -105,40 +94,44 @@ src/
 ├── index.ts
 ├── config.ts
 ├── agents/
-│   ├── catalog.ts          # Stage-specific agent groups
-│   └── run-agent.ts        # Structured agent and shared fallback execution
+│   ├── catalog.ts          # Defines the agent groups for each stage
+│   └── run-agent.ts        # Runs an agent or the shared fallback
 ├── router/
-│   └── router.ts           # Decision, candidate filtering, confidence policy
+│   └── router.ts           # Applies candidate and confidence rules
 ├── pipeline/
-│   ├── stages.ts           # Five-stage composition and retry results
+│   ├── stages.ts           # Controls the five stages and retries
 │   └── prompts.ts
-├── domain/                 # Schemas and cross-stage contracts
-├── cli/                    # Validated interactive questions
-├── output/                 # Shared pipeline presentation and browser adapter
-└── demo/                   # API-free fixture
+├── domain/                 # Contains schemas and stage contracts
+├── cli/                    # Gets validated user input
+├── output/                 # Creates HTML and opens the browser
+└── demo/                   # Contains the local demo data
 ```
 
 ## Usage
 
-Install and configure the repository as described in the
-[root README](../README.md), then run:
+Complete the setup in the [repository README](../README.md). Then set the router
+threshold if necessary:
 
 ```dotenv
 ROUTER_CONFIDENCE_THRESHOLD=0.65
 ```
+
+Run the interactive example:
 
 ```bash
 cd router
 bun run start
 ```
 
-API-free demo and repository checks:
+Run the local demo and all checks:
 
 ```bash
 bun run --filter router demo
 bun run check
 ```
 
-Router calls log their stage candidates, chosen destination, confidence, reason,
-and any fallback override. The router example deliberately reuses the pipeline
-HTML renderer so both patterns keep the same visual presentation.
+The CLI shows the candidates, destination, confidence, reason, and fallback
+override for each router call.
+
+The router and pipeline examples use the same HTML renderer. Thus, the examples
+have the same visual design.

@@ -1,6 +1,8 @@
 import { mkdir, readFile, rename } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import { roles, runStateSchema, type RunState } from "../domain/schemas.ts";
+import { Role } from "../domain/roles.ts";
+import { RunStatus } from "../domain/workflow-values.ts";
 import { emptyTokenTotals } from "../domain/token-usage.ts";
 
 export const stateFileName = "state.json";
@@ -31,8 +33,8 @@ export async function createRunState(options: {
     id,
     prompt: options.prompt,
     workspace: resolve(options.workspace),
-    status: "running",
-    currentRole: "specifier",
+    status: RunStatus.Running,
+    currentRole: Role.Specifier,
     turns: 0,
     maxTurns: options.maxTurns,
     messages: [
@@ -40,7 +42,7 @@ export async function createRunState(options: {
         id: `${id}-0000`,
         sequence: 0,
         from: "user",
-        to: "specifier",
+        to: Role.Specifier,
         createdAt: new Date().toISOString(),
         turn: null,
       },

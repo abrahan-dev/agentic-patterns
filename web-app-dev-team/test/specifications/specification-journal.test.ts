@@ -3,6 +3,8 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import type { SpecifierTurn } from "../../src/domain/schemas.ts";
+import { Role } from "../../src/domain/roles.ts";
+import { TurnDecision } from "../../src/domain/workflow-values.ts";
 import { FileSpecificationJournal } from "../../src/specifications/specification-journal.ts";
 
 const temporaryDirectories: string[] = [];
@@ -24,7 +26,7 @@ async function workspace(): Promise<string> {
 
 function specification(featureId: string): SpecifierTurn {
   return {
-    role: "specifier",
+    role: Role.Specifier,
     featureId,
     summary: `Specified ${featureId}.`,
     specification: `Feature: ${featureId}\n\n  Scenario: Deliver behavior\n    Given a valid initial state\n    When the behavior runs\n    Then its outcome is observable`,
@@ -32,8 +34,8 @@ function specification(featureId: string): SpecifierTurn {
     outOfScope: ["Unrelated behavior."],
     artifacts: [],
     evidence: ["The scenario has an observable outcome."],
-    decision: "handoff",
-    nextRole: "architect",
+    decision: TurnDecision.Handoff,
+    nextRole: Role.Architect,
     reason: "Ready for review.",
   };
 }

@@ -9,8 +9,8 @@ import {
   specifierTurnSchema,
   uiDesignerTurnSchema,
   type AgentTurn,
-  type Role,
 } from "../domain/schemas.ts";
+import { Role } from "../domain/roles.ts";
 import { AgentRunError, type AgentContext, type AgentRunner } from "./contracts.ts";
 import { buildAgentPrompt } from "./prompts.ts";
 import { consumeCodexJsonl } from "./codex-jsonl.ts";
@@ -54,7 +54,7 @@ export class CodexAgentRunner implements AgentRunner {
       "exec",
       "--ephemeral",
       "--sandbox",
-      role === "specifier" || role === "architect" || role === "ui-designer"
+      role === Role.Specifier || role === Role.Architect || role === Role.UiDesigner
         ? "read-only"
         : "workspace-write",
       "--cd",
@@ -98,13 +98,13 @@ export class CodexAgentRunner implements AgentRunner {
     try {
       const raw = await readFile(outputPath, "utf8");
       const schemas: Record<Role, { parse(value: unknown): AgentTurn }> = {
-        specifier: specifierTurnSchema,
-        architect: architectTurnSchema,
-        "ui-designer": uiDesignerTurnSchema,
-        "data-engineer": dataEngineerTurnSchema,
-        "backend-coder": backendCoderTurnSchema,
-        "frontend-coder": frontendCoderTurnSchema,
-        qa: qaTurnSchema,
+        [Role.Specifier]: specifierTurnSchema,
+        [Role.Architect]: architectTurnSchema,
+        [Role.UiDesigner]: uiDesignerTurnSchema,
+        [Role.DataEngineer]: dataEngineerTurnSchema,
+        [Role.BackendCoder]: backendCoderTurnSchema,
+        [Role.FrontendCoder]: frontendCoderTurnSchema,
+        [Role.Qa]: qaTurnSchema,
       };
 
       return {

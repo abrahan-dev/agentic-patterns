@@ -18,7 +18,14 @@ import {
   type PublishedSpecification,
   type RunState,
 } from "../domain/schemas.ts";
+import { Role } from "../domain/roles.ts";
 import { emptyTokenTotals } from "../domain/token-usage.ts";
+import {
+  RestitutionStatus,
+  RunStatus,
+  SpecificationReviewDecision,
+  TurnDecision,
+} from "../domain/workflow-values.ts";
 import { runDevelopmentTeam } from "../orchestration/orchestrator.ts";
 import { loadRunState, saveRunState } from "../orchestration/run-store.ts";
 import { AutomaticSpecificationReviewer } from "../orchestration/specification-reviewer.ts";
@@ -33,7 +40,7 @@ const restitutionStateSchema = z.object({
   id: z.string(),
   workspace: z.string(),
   sourceSpecifications: z.string(),
-  status: z.enum(["running", "interrupted", "completed"]),
+  status: z.enum(RestitutionStatus),
   specifications: z.array(publishedSpecificationSchema),
   nextSequence: z.number().int().positive(),
   currentSequence: z.number().int().positive().nullable(),
@@ -167,7 +174,7 @@ export async function createRestitution(options: {
     id,
     workspace,
     sourceSpecifications,
-    status: "running",
+    status: RestitutionStatus.Running,
     specifications,
     nextSequence: 1,
     currentSequence: null,
@@ -197,7 +204,7 @@ async function createSequenceRun(
   const content = await readFile(resolve(restitution.workspace, target.path), "utf8");
   const runId = `${restitution.id}-sequence-${String(target.sequence).padStart(6, "0")}`;
   const specification = {
-    role: "specifier" as const,
+    role: Role.Specifier,
     featureId: target.featureId,
     summary: `Approved specification ${target.sequence}: ${target.featureId}.`,
     specification: content,
@@ -205,8 +212,8 @@ async function createSequenceRun(
     outOfScope: [],
     artifacts: [target.path],
     evidence: [`SHA-256: ${target.sha256}`],
-    decision: "handoff" as const,
-    nextRole: "architect" as const,
+    decision: TurnDecision.Handoff,
+    nextRole: Role.Architect,
     reason: "This specification was approved in the source journal.",
   };
   const state = runStateSchema.parse({
@@ -214,8 +221,8 @@ async function createSequenceRun(
     id: runId,
     prompt: `Restore specification ${target.sequence} (${target.featureId}) in sequence.`,
     workspace: restitution.workspace,
-    status: "running",
-    currentRole: "architect",
+    status: RunStatus.Running,
+    currentRole: Role.Architect,
     turns: 0,
     maxTurns: restitution.maxTurnsPerSpecification,
     messages: [
@@ -223,7 +230,7 @@ async function createSequenceRun(
         id: `${runId}-0000`,
         sequence: 0,
         from: "user",
-        to: "architect",
+        to: Role.Architect,
         createdAt: new Date().toISOString(),
         turn: null,
       },
@@ -233,7 +240,7 @@ async function createSequenceRun(
         id: target.sourceReviewId,
         createdAt: target.createdAt,
         specification,
-        decision: "approved",
+        decision: SpecificationReviewDecision.Approved,
         feedback: null,
         publishedSpecification: target,
       },
@@ -269,7 +276,7 @@ async function checkpointSequence(
 ): Promise<void> {
   const sequence = restitution.currentSequence;
 
-  if (sequence === null || run.status !== "completed") {
+  if (sequence === null || run.status !== RunStatus.Completed) {
     throw new Error("Only a completed current sequence can be checkpointed.");
   }
 
@@ -315,13 +322,14 @@ async function beginRestitution(
 ): Promise<{ restitution: RestitutionState; recoveringActiveRun: boolean }> {
   const restitution = await loadRestitutionState(directory);
   const recoveringActiveRun =
-    restitution.status === "running" && restitution.currentSequence !== null;
+    restitution.status === RestitutionStatus.Running &&
+    restitution.currentSequence !== null;
 
   if (maxTurnsOverride !== undefined) {
     restitution.maxTurnsPerSpecification = maxTurnsOverride;
   }
 
-  restitution.status = "running";
+  restitution.status = RestitutionStatus.Running;
   restitution.failure = null;
   await saveRestitutionState(directory, restitution);
   await reportProgress(
@@ -343,7 +351,7 @@ async function verifyJournalBeforeSequence(
 
     return true;
   } catch (error) {
-    restitution.status = "interrupted";
+    restitution.status = RestitutionStatus.Interrupted;
     restitution.failure = error instanceof Error ? error.message : String(error);
     await saveRestitutionState(directory, restitution);
     await reportProgress(
@@ -391,7 +399,7 @@ async function resumeFailedRun(
     throw new Error(`Sequence ${target.sequence} has no resumable agent role.`);
   }
 
-  run.status = "running";
+  run.status = RunStatus.Running;
   run.failure = null;
   run.maxTurns = Math.max(run.maxTurns, restitution.maxTurnsPerSpecification);
   await saveRunState(directory, run);
@@ -414,7 +422,7 @@ async function startSequenceRun(
   );
   const run = await createSequenceRun(directory, restitution, target);
   restitution.currentSequence = target.sequence;
-  restitution.resumeRole = "architect";
+  restitution.resumeRole = Role.Architect;
   await saveRestitutionState(directory, restitution);
 
   return run;
@@ -432,11 +440,11 @@ async function prepareSequenceRun(
 
   const run = await loadRunState(directory);
 
-  if (recoveringActiveRun && run.status === "running") {
+  if (recoveringActiveRun && run.status === RunStatus.Running) {
     await recoverUncleanRun(directory, restitution, target, run);
   }
 
-  if (run.status === "failed") {
+  if (run.status === RunStatus.Failed) {
     await resumeFailedRun(directory, restitution, target, run);
   }
 
@@ -450,7 +458,7 @@ async function interruptSequence(
   error: unknown,
 ): Promise<void> {
   const failedRun = await loadRunState(directory);
-  restitution.status = "interrupted";
+  restitution.status = RestitutionStatus.Interrupted;
   restitution.failure = error instanceof Error ? error.message : String(error);
   restitution.resumeRole = failedRun.currentRole;
   restitution.tokenTotals = failedRun.tokenTotals;
@@ -469,7 +477,7 @@ async function executeSequence(
   runner: AgentRunner,
   journal: SpecificationJournal,
 ): Promise<RunState | null> {
-  if (run.status === "completed") {
+  if (run.status === RunStatus.Completed) {
     return run;
   }
 
@@ -491,7 +499,7 @@ async function finishRestitution(
   directory: string,
   restitution: RestitutionState,
 ): Promise<void> {
-  restitution.status = "completed";
+  restitution.status = RestitutionStatus.Completed;
   restitution.currentSequence = null;
   restitution.resumeRole = null;
   restitution.failure = null;

@@ -1,90 +1,89 @@
 # LLM Pipeline: Weekly Meal Plan
 
-An educational example of a linear pipeline built with Bun, TypeScript 7, and
-the OpenAI Responses API. Each stage has its own prompt and Zod schema, and its
-structured output becomes the input for the next stage:
+This example uses Bun, TypeScript 7, Zod, and the OpenAI Responses API. It has a
+linear pipeline with four stages:
 
-1. Create the weekly meal plan skeleton.
-2. Fill each meal slot with a dish.
-3. Add a recipe for every dish.
-4. Consolidate the shopping list by supermarket section.
+1. Create the weekly menu structure.
+2. Add one dish to each meal position.
+3. Add one recipe for each dish.
+4. Group the ingredients by supermarket section.
 
-Before each of the first three stages, the CLI asks only for the context needed
-by that stage. The result is written to `output/generated-weekly-menu.html` and
-opened in the default browser.
+Each stage has a prompt and a Zod schema. The structured output of a stage is
+the input to the next stage.
 
-In addition to validating data shapes with Zod, contracts between stages ensure
-that a stage cannot silently rewrite previous work—for example, changing a date
-while adding recipes.
+Before the first three stages, the CLI asks for the necessary information. The
+application writes the result to `output/generated-weekly-menu.html`. It then
+opens the file in the default browser.
+
+Contracts protect the output of each completed stage. For example, the recipe
+stage cannot change a date.
 
 ## Project structure
 
 ```text
 src/
-├── index.ts                 # Composition root and linear orchestration
-├── config.ts                # Environment configuration
+├── index.ts                 # Starts and controls the pipeline
+├── config.ts                # Reads the environment configuration
 ├── domain/
-│   ├── schemas.ts           # Zod schemas and TypeScript types
-│   └── contracts.ts         # Invariants between stages
+│   ├── schemas.ts           # Defines Zod schemas and TypeScript types
+│   └── contracts.ts         # Checks invariants between stages
 ├── pipeline/
-│   ├── stages.ts            # The four OpenAI stages
-│   └── prompts.ts           # Prompts for each stage
+│   ├── stages.ts            # Runs the four OpenAI stages
+│   └── prompts.ts           # Defines the stage prompts
 ├── cli/
-│   └── questions.ts         # Interactive user input
+│   └── questions.ts         # Gets validated user input
 ├── output/
-│   ├── render-html.ts       # HTML generation
-│   └── open-browser.ts      # Browser adapter
+│   ├── render-html.ts       # Creates the HTML output
+│   └── open-browser.ts      # Opens the browser
 └── demo/
-    └── plan.ts              # Local demo fixture
+    └── plan.ts              # Contains the local demo data
 ```
 
 ## Setup
 
-Complete the shared installation and OpenAI configuration described in the
-[repository README](../README.md). This example loads `OPENAI_API_KEY`,
-`OPENAI_MODEL`, and `OPENAI_REASONING_EFFORT` from the root `.env` file.
+Complete the setup in the [repository README](../README.md). This example reads
+these variables from the root `.env` file:
+
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL`
+- `OPENAI_REASONING_EFFORT`
 
 ## Usage
 
-The interactive command must be run from the pipeline workspace so that terminal
-input is forwarded correctly:
+Run the interactive command from this directory:
 
 ```bash
 cd pipeline
 bun run start
 ```
 
-The non-interactive demo can be run from the repository root with a workspace
-filter:
+Run the local demo from the repository root:
 
 ```bash
 bun run --filter pipeline demo
 ```
 
-The demo uses [`src/demo/plan.ts`](./src/demo/plan.ts) and regenerates the
-versioned [`output/weekly-menu.html`](./output/weekly-menu.html). Real runs use a
-different output filename, so they never overwrite this example.
+The demo reads [`src/demo/plan.ts`](./src/demo/plan.ts). It writes the versioned
+[`output/weekly-menu.html`](./output/weekly-menu.html). A live run uses a
+different file name and does not replace the demo file.
 
-Checks:
+Run the checks:
 
 ```bash
 bun run check
 ```
 
-To apply formatting and automatic lint fixes:
+Apply formatting and automatic lint corrections:
 
 ```bash
 bun run format
 ```
 
-The style rules require braces around control-flow blocks, blank lines around
-blocks when adjacent statements exist, and a blank line before `return`
-statements when another statement precedes them.
+The lint rules require braces around control-flow blocks. They also require
+blank lines before blocks and `return` statements when applicable.
 
-Type checking still runs on TypeScript 7. TypeScript 5 is installed only as a
-compatibility API for lint tooling that does not yet support the TypeScript 7
-compiler API.
+Type checking uses TypeScript 7. The lint tools use TypeScript 5 as a
+compatibility API.
 
-The example configuration uses `gpt-5.4-mini` with `low` reasoning effort.
-Supported reasoning-effort values for this model are `none`, `low`, `medium`,
-`high`, and `xhigh`.
+The example uses `gpt-5.4-mini` with `low` reasoning effort. The model also
+accepts `none`, `medium`, `high`, and `xhigh`.

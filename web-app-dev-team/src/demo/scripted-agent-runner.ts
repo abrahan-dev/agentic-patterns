@@ -1,9 +1,11 @@
 import type { AgentContext, AgentRunner } from "../agents/contracts.ts";
-import type { AgentTurn, Role } from "../domain/schemas.ts";
+import type { AgentTurn } from "../domain/schemas.ts";
+import { Role } from "../domain/roles.ts";
+import { TurnDecision } from "../domain/workflow-values.ts";
 
 const turns: Record<Role, AgentTurn> = {
-  specifier: {
-    role: "specifier",
+  [Role.Specifier]: {
+    role: Role.Specifier,
     featureId: "generic-feature",
     summary: "Defined observable behavior and acceptance criteria.",
     specification:
@@ -12,12 +14,12 @@ const turns: Record<Role, AgentTurn> = {
     outOfScope: [],
     artifacts: [],
     evidence: ["The request has one cohesive user-visible behavior."],
-    decision: "handoff",
-    nextRole: "architect",
+    decision: TurnDecision.Handoff,
+    nextRole: Role.Architect,
     reason: "The behavior is precise enough for technical design.",
   },
-  architect: {
-    role: "architect",
+  [Role.Architect]: {
+    role: Role.Architect,
     summary: "Closed the feature as a full-stack business application slice.",
     design:
       "Implement one domain context, a tRPC API, SQLite persistence and a React UI.",
@@ -35,12 +37,12 @@ const turns: Record<Role, AgentTurn> = {
     risks: [],
     artifacts: [],
     evidence: ["Every Gherkin outcome is assigned to an implementation surface."],
-    decision: "handoff",
-    nextRole: "ui-designer",
+    decision: TurnDecision.Handoff,
+    nextRole: Role.UiDesigner,
     reason: "The UI contract must be described before implementation.",
   },
-  "ui-designer": {
-    role: "ui-designer",
+  [Role.UiDesigner]: {
+    role: Role.UiDesigner,
     summary: "Defined the business UI interaction contract.",
     screens: ["Feature workspace with a primary completion form."],
     interactions: ["Submit the valid request and show the resulting identifier."],
@@ -48,12 +50,12 @@ const turns: Record<Role, AgentTurn> = {
     accessibility: ["The form is labelled and keyboard operable."],
     artifacts: [],
     evidence: ["All observable Gherkin outcomes have a visible UI state."],
-    decision: "handoff",
-    nextRole: "data-engineer",
+    decision: TurnDecision.Handoff,
+    nextRole: Role.DataEngineer,
     reason: "The persistence stage is required by the technical plan.",
   },
-  "data-engineer": {
-    role: "data-engineer",
+  [Role.DataEngineer]: {
+    role: Role.DataEngineer,
     summary: "Implemented the SQLite schema and reversible migration.",
     schemaChanges: ["Added the generic_features table with explicit constraints."],
     migrations: ["Added a versioned Drizzle SQL migration."],
@@ -61,12 +63,12 @@ const turns: Record<Role, AgentTurn> = {
     tests: ["Migrated an empty SQLite database and exercised the repository."],
     artifacts: ["drizzle/0001_generic_feature.sql"],
     evidence: ["Migration and repository tests pass."],
-    decision: "handoff",
-    nextRole: "backend-coder",
+    decision: TurnDecision.Handoff,
+    nextRole: Role.BackendCoder,
     reason: "Persistence is ready for backend integration.",
   },
-  "backend-coder": {
-    role: "backend-coder",
+  [Role.BackendCoder]: {
+    role: Role.BackendCoder,
     summary: "Implemented the domain use case and documented tRPC API.",
     changes: ["Added the requested domain and application behavior."],
     tests: ["Added unit, integration and API contract tests."],
@@ -74,12 +76,12 @@ const turns: Record<Role, AgentTurn> = {
     domainDecisions: ["Kept the invariant inside the aggregate."],
     artifacts: ["src/contexts/generic-feature", "src/apps/business-app/backend"],
     evidence: ["Backend tests and OpenAPI generation pass."],
-    decision: "handoff",
-    nextRole: "frontend-coder",
+    decision: TurnDecision.Handoff,
+    nextRole: Role.FrontendCoder,
     reason: "The typed API is ready for UI integration.",
   },
-  "frontend-coder": {
-    role: "frontend-coder",
+  [Role.FrontendCoder]: {
+    role: Role.FrontendCoder,
     summary: "Implemented the accessible React interface against tRPC.",
     changes: ["Added the feature screen and all specified interface states."],
     tests: ["Added focused component tests."],
@@ -87,12 +89,12 @@ const turns: Record<Role, AgentTurn> = {
     apiUsage: ["Calls genericFeature.complete through the typed tRPC client."],
     artifacts: ["src/apps/business-app/frontend"],
     evidence: ["Frontend tests pass."],
-    decision: "handoff",
-    nextRole: "qa",
+    decision: TurnDecision.Handoff,
+    nextRole: Role.Qa,
     reason: "The complete user journey is ready for independent QA.",
   },
-  qa: {
-    role: "qa",
+  [Role.Qa]: {
+    role: Role.Qa,
     summary: "Acceptance behavior passed through the browser.",
     scenariosTested: ["Complete the requested behavior"],
     commands: ["bun run test:e2e"],
@@ -100,7 +102,7 @@ const turns: Record<Role, AgentTurn> = {
     failureOwner: null,
     artifacts: ["test/e2e/generic-feature.spec.ts"],
     evidence: ["Playwright: 1 pass, 0 fail"],
-    decision: "complete",
+    decision: TurnDecision.Complete,
     nextRole: null,
     reason: "All acceptance criteria have executable end-to-end evidence.",
   },

@@ -1,7 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { AgentContext } from "./contracts.ts";
-import type { AgentTurn, Handoff, Role, SpecificationReview } from "../domain/schemas.ts";
+import type { AgentTurn, Handoff, SpecificationReview } from "../domain/schemas.ts";
+import { Role } from "../domain/roles.ts";
+import { SpecificationReviewDecision, TurnDecision } from "../domain/workflow-values.ts";
 import { transitionDescription } from "../domain/workflow.ts";
 import {
   describeWorkspaceFacts,
@@ -16,11 +18,20 @@ export function loadRoleInstructions(role: Role): Promise<string> {
   return readFile(roleInstructionsPath(role), "utf8");
 }
 
+export const communicationStandardPath = resolve(
+  import.meta.dir,
+  "../../config/simplified-technical-english.md",
+);
+
+export function loadCommunicationStandard(): Promise<string> {
+  return readFile(communicationStandardPath, "utf8");
+}
+
 function list(values: string[], separator = "; "): string {
   return values.join(separator) || "none";
 }
 
-function describeSpecifier(turn: Extract<AgentTurn, { role: "specifier" }>): string {
+function describeSpecifier(turn: Extract<AgentTurn, { role: Role.Specifier }>): string {
   return [
     `Specification:\n${turn.specification}`,
     `Assumptions: ${list(turn.assumptions)}`,
@@ -28,7 +39,7 @@ function describeSpecifier(turn: Extract<AgentTurn, { role: "specifier" }>): str
   ].join("\n");
 }
 
-function describeArchitect(turn: Extract<AgentTurn, { role: "architect" }>): string {
+function describeArchitect(turn: Extract<AgentTurn, { role: Role.Architect }>): string {
   return [
     `Design:\n${turn.design}`,
     `Application: ${turn.changePlan.applicationName}`,
@@ -42,7 +53,7 @@ function describeArchitect(turn: Extract<AgentTurn, { role: "architect" }>): str
   ].join("\n");
 }
 
-function describeUiDesigner(turn: Extract<AgentTurn, { role: "ui-designer" }>): string {
+function describeUiDesigner(turn: Extract<AgentTurn, { role: Role.UiDesigner }>): string {
   return [
     `Screens: ${list(turn.screens)}`,
     `Interactions: ${list(turn.interactions)}`,
@@ -52,7 +63,7 @@ function describeUiDesigner(turn: Extract<AgentTurn, { role: "ui-designer" }>): 
 }
 
 function describeDataEngineer(
-  turn: Extract<AgentTurn, { role: "data-engineer" }>,
+  turn: Extract<AgentTurn, { role: Role.DataEngineer }>,
 ): string {
   return [
     `Schema changes: ${list(turn.schemaChanges)}`,
@@ -63,7 +74,7 @@ function describeDataEngineer(
 }
 
 function describeBackendCoder(
-  turn: Extract<AgentTurn, { role: "backend-coder" }>,
+  turn: Extract<AgentTurn, { role: Role.BackendCoder }>,
 ): string {
   return [
     `Changes: ${list(turn.changes)}`,
@@ -74,7 +85,7 @@ function describeBackendCoder(
 }
 
 function describeFrontendCoder(
-  turn: Extract<AgentTurn, { role: "frontend-coder" }>,
+  turn: Extract<AgentTurn, { role: Role.FrontendCoder }>,
 ): string {
   return [
     `Changes: ${list(turn.changes)}`,
@@ -84,7 +95,7 @@ function describeFrontendCoder(
   ].join("\n");
 }
 
-function describeQa(turn: Extract<AgentTurn, { role: "qa" }>): string {
+function describeQa(turn: Extract<AgentTurn, { role: Role.Qa }>): string {
   return [
     `Scenarios tested: ${list(turn.scenariosTested)}`,
     `Commands: ${list(turn.commands)}`,
@@ -94,19 +105,19 @@ function describeQa(turn: Extract<AgentTurn, { role: "qa" }>): string {
 
 function describeDeliverable(message: Handoff): string {
   switch (message.turn?.role) {
-    case "specifier":
+    case Role.Specifier:
       return describeSpecifier(message.turn);
-    case "architect":
+    case Role.Architect:
       return describeArchitect(message.turn);
-    case "ui-designer":
+    case Role.UiDesigner:
       return describeUiDesigner(message.turn);
-    case "data-engineer":
+    case Role.DataEngineer:
       return describeDataEngineer(message.turn);
-    case "backend-coder":
+    case Role.BackendCoder:
       return describeBackendCoder(message.turn);
-    case "frontend-coder":
+    case Role.FrontendCoder:
       return describeFrontendCoder(message.turn);
-    case "qa":
+    case Role.Qa:
       return describeQa(message.turn);
     default:
       return "";
@@ -119,7 +130,7 @@ function describeHandoff(message: Handoff): string {
   }
 
   return [
-    `#${message.sequence} ${message.from} -> ${message.to ?? "complete"}`,
+    `#${message.sequence} ${message.from} -> ${message.to ?? TurnDecision.Complete}`,
     `Summary: ${message.turn.summary}`,
     describeDeliverable(message),
     `Artifacts: ${message.turn.artifacts.join(", ") || "none"}`,
@@ -151,36 +162,36 @@ function relevantHandoffs(context: AgentContext): Handoff[] {
   const { role, state } = context;
   const latestAddressedToRole = state.messages.findLast((message) => message.to === role);
   const candidates =
-    role === "specifier"
-      ? [latestHandoffFrom(state, "architect")]
-      : role === "architect"
-        ? [latestHandoffFrom(state, "specifier"), latestAddressedToRole]
-        : role === "ui-designer"
-          ? [latestHandoffFrom(state, "architect"), latestHandoffFrom(state, "qa")]
-          : role === "data-engineer"
+    role === Role.Specifier
+      ? [latestHandoffFrom(state, Role.Architect)]
+      : role === Role.Architect
+        ? [latestHandoffFrom(state, Role.Specifier), latestAddressedToRole]
+        : role === Role.UiDesigner
+          ? [latestHandoffFrom(state, Role.Architect), latestHandoffFrom(state, Role.Qa)]
+          : role === Role.DataEngineer
             ? [
-                latestHandoffFrom(state, "architect"),
-                latestHandoffFrom(state, "ui-designer"),
-                latestHandoffFrom(state, "qa"),
+                latestHandoffFrom(state, Role.Architect),
+                latestHandoffFrom(state, Role.UiDesigner),
+                latestHandoffFrom(state, Role.Qa),
               ]
-            : role === "backend-coder"
+            : role === Role.BackendCoder
               ? [
-                  latestHandoffFrom(state, "architect"),
-                  latestHandoffFrom(state, "ui-designer"),
-                  latestHandoffFrom(state, "data-engineer"),
-                  latestHandoffFrom(state, "qa"),
+                  latestHandoffFrom(state, Role.Architect),
+                  latestHandoffFrom(state, Role.UiDesigner),
+                  latestHandoffFrom(state, Role.DataEngineer),
+                  latestHandoffFrom(state, Role.Qa),
                 ]
-              : role === "frontend-coder"
+              : role === Role.FrontendCoder
                 ? [
-                    latestHandoffFrom(state, "architect"),
-                    latestHandoffFrom(state, "ui-designer"),
-                    latestHandoffFrom(state, "backend-coder"),
-                    latestHandoffFrom(state, "qa"),
+                    latestHandoffFrom(state, Role.Architect),
+                    latestHandoffFrom(state, Role.UiDesigner),
+                    latestHandoffFrom(state, Role.BackendCoder),
+                    latestHandoffFrom(state, Role.Qa),
                   ]
                 : [
-                    latestHandoffFrom(state, "data-engineer"),
-                    latestHandoffFrom(state, "backend-coder"),
-                    latestHandoffFrom(state, "frontend-coder"),
+                    latestHandoffFrom(state, Role.DataEngineer),
+                    latestHandoffFrom(state, Role.BackendCoder),
+                    latestHandoffFrom(state, Role.FrontendCoder),
                   ];
 
   return candidates.filter(
@@ -190,7 +201,10 @@ function relevantHandoffs(context: AgentContext): Handoff[] {
 }
 
 function relevantReview(context: AgentContext): string {
-  const decision = context.role === "specifier" ? "changes_requested" : "approved";
+  const decision =
+    context.role === Role.Specifier
+      ? SpecificationReviewDecision.ChangesRequested
+      : SpecificationReviewDecision.Approved;
   const review = context.state.specificationReviews.findLast(
     (candidate) => candidate.decision === decision,
   );
@@ -201,8 +215,9 @@ function relevantReview(context: AgentContext): string {
 function approvedArtifact(state: AgentContext["state"]): string {
   const specification =
     state.targetSpecification ??
-    state.specificationReviews.findLast((review) => review.decision === "approved")
-      ?.publishedSpecification;
+    state.specificationReviews.findLast(
+      (review) => review.decision === SpecificationReviewDecision.Approved,
+    )?.publishedSpecification;
 
   return specification
     ? `${specification.path}\nSHA-256: ${specification.sha256}\nSequence: ${specification.sequence}`
@@ -256,7 +271,10 @@ function restitutionRules(state: AgentContext["state"]): string {
 
 export async function buildAgentPrompt(context: AgentContext): Promise<string> {
   const { role, state } = context;
-  const roleInstructions = await loadRoleInstructions(role);
+  const [roleInstructions, communicationStandard] = await Promise.all([
+    loadRoleInstructions(role),
+    loadCommunicationStandard(),
+  ]);
   const facts = await loadWorkspaceFacts(state.workspace, context.runDirectory);
   const history = relevantHandoffs(context).map(describeHandoff).join("\n\n") || "none";
 
@@ -276,6 +294,9 @@ ${bootstrapSummary(state)}
 
 Your responsibility:
 ${roleInstructions}
+
+Required communication standard:
+${communicationStandard}
 
 Deterministic workflow (no other transition is legal):
 ${transitionDescription(state.mode)}

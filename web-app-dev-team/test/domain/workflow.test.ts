@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import type { ChangePlan, Role } from "../../src/domain/schemas.ts";
+import type { ChangePlan } from "../../src/domain/schemas.ts";
+import { Role } from "../../src/domain/roles.ts";
+import { TurnDecision } from "../../src/domain/workflow-values.ts";
 import {
   firstImplementationRole,
   nextImplementationRole,
@@ -16,24 +18,25 @@ const fullStack: ChangePlan = {
 
 function turn(
   nextRole: Role | null,
-  decision: "handoff" | "complete" = "handoff",
+  decision: TurnDecision = TurnDecision.Handoff,
   failureOwner: Role | null = null,
 ) {
   return {
     decision,
     nextRole,
     failureOwner,
-    failures: decision === "handoff" && failureOwner ? ["observable failure"] : [],
+    failures:
+      decision === TurnDecision.Handoff && failureOwner ? ["observable failure"] : [],
   };
 }
 
 describe("deterministic specialized workflow", () => {
   test("derives conditional implementation stages from the architect plan", () => {
-    expect(firstImplementationRole(fullStack)).toBe("ui-designer");
-    expect(nextImplementationRole("ui-designer", fullStack)).toBe("data-engineer");
-    expect(nextImplementationRole("data-engineer", fullStack)).toBe("backend-coder");
-    expect(nextImplementationRole("backend-coder", fullStack)).toBe("frontend-coder");
-    expect(nextImplementationRole("frontend-coder", fullStack)).toBe("qa");
+    expect(firstImplementationRole(fullStack)).toBe(Role.UiDesigner);
+    expect(nextImplementationRole(Role.UiDesigner, fullStack)).toBe(Role.DataEngineer);
+    expect(nextImplementationRole(Role.DataEngineer, fullStack)).toBe(Role.BackendCoder);
+    expect(nextImplementationRole(Role.BackendCoder, fullStack)).toBe(Role.FrontendCoder);
+    expect(nextImplementationRole(Role.FrontendCoder, fullStack)).toBe(Role.Qa);
 
     expect(
       firstImplementationRole({
@@ -41,41 +44,59 @@ describe("deterministic specialized workflow", () => {
         dataRequired: false,
         frontendRequired: false,
       }),
-    ).toBe("backend-coder");
+    ).toBe(Role.BackendCoder);
   });
 
   test("accepts the planned path, architect escalation and owned QA feedback", () => {
-    expect(() => validateTransition("specifier", turn("architect"))).not.toThrow();
+    expect(() => validateTransition(Role.Specifier, turn(Role.Architect))).not.toThrow();
     expect(() =>
-      validateTransition("architect", turn("ui-designer"), "delivery", fullStack),
+      validateTransition(Role.Architect, turn(Role.UiDesigner), "delivery", fullStack),
     ).not.toThrow();
     expect(() =>
-      validateTransition("ui-designer", turn("data-engineer"), "delivery", fullStack),
+      validateTransition(Role.UiDesigner, turn(Role.DataEngineer), "delivery", fullStack),
     ).not.toThrow();
     expect(() =>
-      validateTransition("data-engineer", turn("backend-coder"), "delivery", fullStack),
+      validateTransition(
+        Role.DataEngineer,
+        turn(Role.BackendCoder),
+        "delivery",
+        fullStack,
+      ),
     ).not.toThrow();
     expect(() =>
-      validateTransition("backend-coder", turn("frontend-coder"), "delivery", fullStack),
+      validateTransition(
+        Role.BackendCoder,
+        turn(Role.FrontendCoder),
+        "delivery",
+        fullStack,
+      ),
     ).not.toThrow();
     expect(() =>
-      validateTransition("frontend-coder", turn("architect"), "delivery", fullStack),
+      validateTransition(Role.FrontendCoder, turn(Role.Architect), "delivery", fullStack),
     ).not.toThrow();
     expect(() =>
-      validateTransition("qa", turn("frontend-coder", "handoff", "frontend-coder")),
+      validateTransition(
+        Role.Qa,
+        turn(Role.FrontendCoder, TurnDecision.Handoff, Role.FrontendCoder),
+      ),
     ).not.toThrow();
-    expect(() => validateTransition("qa", turn(null, "complete"))).not.toThrow();
+    expect(() =>
+      validateTransition(Role.Qa, turn(null, TurnDecision.Complete)),
+    ).not.toThrow();
   });
 
   test("rejects skipped stages, premature completion and mismatched QA ownership", () => {
     expect(() =>
-      validateTransition("architect", turn("backend-coder"), "delivery", fullStack),
+      validateTransition(Role.Architect, turn(Role.BackendCoder), "delivery", fullStack),
     ).toThrow("must hand off to ui-designer");
-    expect(() => validateTransition("backend-coder", turn(null, "complete"))).toThrow(
-      "Only QA may complete",
-    );
     expect(() =>
-      validateTransition("qa", turn("backend-coder", "handoff", "frontend-coder")),
+      validateTransition(Role.BackendCoder, turn(null, TurnDecision.Complete)),
+    ).toThrow("Only QA may complete");
+    expect(() =>
+      validateTransition(
+        Role.Qa,
+        turn(Role.BackendCoder, TurnDecision.Handoff, Role.FrontendCoder),
+      ),
     ).toThrow("failureOwner");
   });
 });
@@ -83,8 +104,8 @@ describe("deterministic specialized workflow", () => {
 test("restitution cannot return an approved specification to the specifier", () => {
   expect(() =>
     validateTransition(
-      "architect",
-      { decision: "handoff", nextRole: "specifier" },
+      Role.Architect,
+      { decision: TurnDecision.Handoff, nextRole: Role.Specifier },
       "restitution",
       fullStack,
     ),

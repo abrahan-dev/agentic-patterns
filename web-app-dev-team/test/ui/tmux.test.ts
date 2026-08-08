@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { Role } from "../../src/domain/roles.ts";
 import type { CommandRunner } from "../../src/ui/tmux.ts";
 import { assertTmuxInstalled, launchTmux } from "../../src/ui/tmux.ts";
 
@@ -30,12 +31,12 @@ test("builds one tiled seven-pane agents window and a hidden orchestrator", asyn
   expect(commands.some((command) => command.includes("orchestrator"))).toBeTrue();
   expect(commands.some((command) => command[1] === "attach-session")).toBeFalse();
   const combined = commands.flat().join("\n");
-  expect(combined).toContain("specifier");
-  expect(combined).toContain("architect");
-  expect(combined).toContain("ui-designer");
-  expect(combined).toContain("data-engineer");
-  expect(combined).toContain("backend-coder");
-  expect(combined).toContain("frontend-coder");
-  expect(combined).toContain("qa");
+  expect(combined).toContain(Role.Specifier);
+  expect(combined).toContain(Role.Architect);
+  expect(combined).toContain(Role.UiDesigner);
+  expect(combined).toContain(Role.DataEngineer);
+  expect(combined).toContain(Role.BackendCoder);
+  expect(combined).toContain(Role.FrontendCoder);
+  expect(combined).toContain(Role.Qa);
   expect(combined).toContain("'/tmp/run with spaces'");
 });

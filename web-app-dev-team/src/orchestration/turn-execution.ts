@@ -4,6 +4,7 @@ import {
   type AgentRunner,
 } from "../agents/contracts.ts";
 import type { AgentTurn, Role, RunState } from "../domain/schemas.ts";
+import { RunStatus } from "../domain/workflow-values.ts";
 import { recordTokenUsage } from "../domain/token-usage.ts";
 import { validateTransition } from "../domain/workflow.ts";
 import type { SpecificationJournal } from "../specifications/specification-journal.ts";
@@ -86,7 +87,7 @@ function recordExecution(
     role,
     startedAt,
     completedAt: new Date().toISOString(),
-    status: "completed",
+    status: RunStatus.Completed,
     usage,
     ...observations,
   });
@@ -145,7 +146,7 @@ export async function recordFailedAttempt(
   error: unknown,
 ): Promise<void> {
   const failure = error instanceof Error ? error.message : String(error);
-  state.status = "failed";
+  state.status = RunStatus.Failed;
   state.failure = failure;
   const failedUsage = error instanceof AgentRunError ? error.usage : attempt.usage;
 
@@ -156,7 +157,7 @@ export async function recordFailedAttempt(
       role: attempt.activeRole,
       startedAt: attempt.startedAt ?? new Date().toISOString(),
       completedAt: new Date().toISOString(),
-      status: "failed",
+      status: RunStatus.Failed,
       usage: failedUsage,
       commands: [],
       changedFiles: [],

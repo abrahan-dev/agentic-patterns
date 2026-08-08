@@ -1,18 +1,18 @@
 # Orchestrator–Workers: Weekly Meal Plan
 
-An educational fan-out/fan-in example built with Bun, TypeScript, Zod, and the
-OpenAI Responses API. A capable orchestrator makes the global decisions while
-lower-cost workers perform the verbose, parallelizable work.
+This example uses Bun, TypeScript, Zod, and the OpenAI Responses API. An
+orchestrator controls the complete plan. Lower-cost workers create recipes in
+parallel.
 
-1. The orchestrator sees the complete request and chooses every dish for the
-   week. A contract rejects duplicate dish names and any changed calendar slot.
-2. The application derives one immutable recipe task per day.
-3. A concurrency-limited worker pool creates the seven daily recipe sets in
-   parallel. Workers cannot rename or replace their assigned dishes.
-4. The orchestrator returns after every worker succeeds and consolidates the
-   ingredients into a shopping list.
-5. Application code assembles the final result, so synthesis cannot silently
-   rewrite the menu or recipes.
+1. The orchestrator selects all dishes for the week.
+2. The application creates one fixed recipe task for each day.
+3. The worker pool creates the seven daily recipe groups.
+4. The orchestrator combines the ingredients into a shopping list.
+5. The application assembles the final result.
+
+Contracts reject duplicate dish names and changed calendar positions. A worker
+cannot change its assigned dishes. The synthesis step cannot change the menu or
+the recipes.
 
 ```text
 request -> orchestrator.plan -> day tasks -> worker pool -> orchestrator.synthesize
@@ -20,27 +20,26 @@ request -> orchestrator.plan -> day tasks -> worker pool -> orchestrator.synthes
                                    Monday  Tuesday  ... Sunday
 ```
 
-## Why the orchestrator chooses the dishes
+## Dish selection
 
-Workers only see one day to keep their prompts small. If they also chose dishes,
-they could independently produce the same meal. The orchestrator sees the whole
-week and owns diversity; workers expand an already closed menu into recipes.
+Each worker receives one day. This keeps the worker prompts small. The
+orchestrator receives the complete week and prevents duplicate dishes.
 
-## Observability and failure policy
+## Logs and failures
 
-The CLI logs when each call starts and completes, its model, reasoning effort,
-duration, reasoning-token count, retry attempt, and peak worker concurrency. It
-does not display private chain-of-thought. The final summary reports token usage
-instead of embedding model prices that would become stale.
+The CLI shows the start and end of each call. It also shows the model, reasoning
+effort, duration, token count, retry number, and maximum worker concurrency.
 
-Workers are attempted twice by default. Only the failed day is retried. The pool
-waits for every in-flight worker, and synthesis does not run if any task exhausts
-its retries.
+The CLI does not show private chain-of-thought. The final summary shows token
+use. It does not contain model prices because prices can change.
+
+By default, the application tries each failed worker two times. It tries only
+the failed day again. Synthesis starts only after all workers are successful.
 
 ## Configuration
 
-Complete the shared setup in the [repository README](../README.md), then add or
-adjust these values in the root `.env`:
+Complete the setup in the [repository README](../README.md). Then set these
+variables in the root `.env` file:
 
 ```dotenv
 OPENAI_ORCHESTRATOR_MODEL=gpt-5.6-sol
@@ -53,24 +52,26 @@ WORKER_MAX_ATTEMPTS=2
 
 ## Usage
 
-Run the interactive example from its workspace:
+Run the interactive example from this directory:
 
 ```bash
 cd orchestrator-workers
 bun run start
 ```
 
-The API-free demo runs the real orchestration code with deterministic fake
-agents and different simulated delays, making the fan-out visible in the CLI:
+Run the local demo from the repository root:
 
 ```bash
 bun run --filter orchestrator-workers demo
 ```
 
-Append `--no-open` when running `src/index.ts` directly in CI or when only the
-terminal trace and generated file are needed.
+The demo uses deterministic agents and different simulated delays. The CLI
+shows the parallel work.
 
-Checks:
+Add `--no-open` when you run `src/index.ts` in CI. You can also use this option
+when you only need the terminal output and generated file.
+
+Run the checks:
 
 ```bash
 bun run check

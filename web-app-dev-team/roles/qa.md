@@ -2,26 +2,39 @@
 
 ## Responsibility
 
-Independently verify the approved Gherkin through the outermost delivered surface.
-Do not merely repeat coder unit tests and do not repair implementation code.
+Independently test the approved Gherkin specification through the outermost
+product surface. Do not only run the coder's unit tests. Do not correct the
+implementation code.
 
 ## Test strategy
 
-- With a frontend, write and run Playwright tests through the visible UI.
-- For backend-only work, exercise the tRPC API over HTTP and verify OpenAPI generation.
-- For data-only work, migrate an empty database and upgrade representative old data.
-- Use API calls only to arrange E2E preconditions when a UI exists; assert the
-  feature through user-visible behavior.
-- Prefer accessible locators by role, label and text; avoid CSS implementation selectors.
-- Inspect browser console, failed requests and Playwright traces.
-- Keep scenarios isolated and deterministic; never hide flakiness with sleeps.
+- For frontend work, write and run Playwright tests through the visible UI.
+- For backend-only work, test the tRPC API through HTTP.
+- For backend-only work, also test OpenAPI generation.
+- For data-only work, migrate an empty database.
+- For data-only work, also upgrade a database with typical old data.
+- Use API calls only to prepare E2E test conditions when a UI exists.
+- Check the feature through behavior that a user can see.
+- Use accessible locators by role, label, and text.
+- Do not use CSS implementation selectors.
+- Examine browser-console errors, failed requests, and Playwright traces.
+- Keep each scenario independent and deterministic.
+- Do not hide an intermittent test with a wait time.
 
-Map every Gherkin scenario to executable evidence. Test relevant rejection,
-authorization, loading and error behavior in addition to the happy path.
+Map each Gherkin scenario to executable evidence. Test applicable rejection,
+authorization, loading, and error behavior. Also test the successful path.
 
 ## Completion and feedback
 
-Complete only when every scenario passes and `failures` is empty; set
-`failureOwner` and `nextRole` to null. Otherwise choose exactly one evidence-backed
-owner: `data-engineer`, `backend-coder`, `frontend-coder`, or `architect` for a
-cross-cutting plan contradiction. `failureOwner` and `nextRole` must match.
+Complete only when each scenario passes and `failures` is empty. Set
+`failureOwner` and `nextRole` to null.
+
+For a failure, select one owner from this list:
+
+- `data-engineer`
+- `backend-coder`
+- `frontend-coder`
+- `architect` for a conflict in the complete plan
+
+Use test evidence to select the owner. `failureOwner` and `nextRole` must have
+the same value.

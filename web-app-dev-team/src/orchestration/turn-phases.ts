@@ -4,10 +4,15 @@ import {
   type AgentTurn,
   type Handoff,
   type LocalCheck,
-  type Role,
   type RunState,
   type SpecificationReview,
 } from "../domain/schemas.ts";
+import { Role } from "../domain/roles.ts";
+import {
+  RunStatus,
+  SpecificationReviewDecision,
+  TurnDecision,
+} from "../domain/workflow-values.ts";
 import { validateGherkin } from "../local/gherkin.ts";
 import { runQualityGate } from "../local/quality-gate.ts";
 import {
@@ -51,7 +56,7 @@ function gherkinCheck(
     check: {
       sequence: state.localChecks.length + 1,
       turn: state.turns,
-      role: "specifier",
+      role: Role.Specifier,
       kind: "gherkin",
       createdAt: new Date().toISOString(),
       passed: validation.errors.length === 0,
@@ -70,7 +75,7 @@ async function repeatSpecifier(
   state: RunState,
   turn: AgentTurn,
 ): Promise<TurnPhaseResult> {
-  state.currentRole = "specifier";
+  state.currentRole = Role.Specifier;
   await saveRunState(runDirectory, state);
 
   return { turn, repeatRole: true };
@@ -85,7 +90,7 @@ export async function processSpecificationPhase(options: {
 }): Promise<TurnPhaseResult> {
   const { accepted, runDirectory, state, reviewer, journal } = options;
 
-  if (accepted.role !== "specifier") {
+  if (accepted.role !== Role.Specifier) {
     return { turn: accepted.turn, repeatRole: false };
   }
 
@@ -113,7 +118,7 @@ export async function processSpecificationPhase(options: {
     specification,
   };
 
-  if (decision.decision === "changes_requested") {
+  if (decision.decision === SpecificationReviewDecision.ChangesRequested) {
     const review: SpecificationReview = {
       ...reviewBase,
       ...decision,
@@ -157,8 +162,8 @@ export async function processBootstrapPhase(options: {
   const { turn, runDirectory, state, bootstrapper } = options;
 
   if (
-    turn.role !== "architect" ||
-    turn.nextRole === "specifier" ||
+    turn.role !== Role.Architect ||
+    turn.nextRole === Role.Specifier ||
     state.workspaceBootstrap !== null
   ) {
     return;
@@ -180,7 +185,7 @@ export async function processQualityPhase(options: {
   const { accepted, runDirectory, state } = options;
   let { turn } = options;
 
-  if (!isCodeWritingRole(accepted.role) || turn.nextRole === "architect") {
+  if (!isCodeWritingRole(accepted.role) || turn.nextRole === Role.Architect) {
     return { turn, repeatRole: false };
   }
 
@@ -194,7 +199,7 @@ export async function processQualityPhase(options: {
     turn: state.turns,
     sequence: state.localChecks.length + 1,
     role: accepted.role,
-    runScripts: turn.nextRole === "qa",
+    runScripts: turn.nextRole === Role.Qa,
   });
   state.localChecks.push(gate);
   turn = {
@@ -238,10 +243,10 @@ export async function persistTurnTransition(options: {
 }): Promise<boolean> {
   const { runDirectory, state, role, turn } = options;
 
-  if (turn.decision === "complete") {
+  if (turn.decision === TurnDecision.Complete) {
     const completion = handoff(state, role, null, turn);
     state.messages.push(completion);
-    state.status = "completed";
+    state.status = RunStatus.Completed;
     state.currentRole = null;
     state.finalSummary = turn.summary;
     await saveRunState(runDirectory, state);

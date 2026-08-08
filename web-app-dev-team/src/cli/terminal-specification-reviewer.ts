@@ -1,5 +1,6 @@
 import { createInterface } from "node:readline/promises";
 import type { SpecificationReviewDecision } from "../domain/schemas.ts";
+import { SpecificationReviewDecision as ReviewDecision } from "../domain/workflow-values.ts";
 import type {
   SpecificationReviewContext,
   SpecificationReviewer,
@@ -38,14 +39,14 @@ async function askForDecision(ask: Ask): Promise<SpecificationReviewDecision> {
       .toLowerCase();
 
     if (answer === "a" || answer === "approve") {
-      return { decision: "approved", feedback: null };
+      return { decision: ReviewDecision.Approved, feedback: null };
     }
 
     if (answer === "c" || answer === "changes") {
       const feedback = (await ask("Describe the required changes: ")).trim();
 
       if (feedback) {
-        return { decision: "changes_requested", feedback };
+        return { decision: ReviewDecision.ChangesRequested, feedback };
       }
 
       console.log("Feedback cannot be empty.");

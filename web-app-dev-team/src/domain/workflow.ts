@@ -1,14 +1,16 @@
-import type { ChangePlan, Role } from "./schemas.ts";
+import type { ChangePlan } from "./schemas.ts";
+import { Role } from "./roles.ts";
+import { TurnDecision } from "./workflow-values.ts";
 
 interface WorkflowDecision {
-  decision: "handoff" | "complete";
+  decision: TurnDecision;
   nextRole: Role | null;
   failureOwner?: Role | null;
   failures?: string[];
 }
 
 function validateCompletion(from: Role, turn: WorkflowDecision): void {
-  if (from !== "qa" || turn.nextRole !== null) {
+  if (from !== Role.Qa || turn.nextRole !== null) {
     throw new Error("Only QA may complete a run, and completion has no next role.");
   }
 
@@ -30,7 +32,7 @@ function requireNextRole(turn: WorkflowDecision): Role {
 }
 
 function validateSpecifierHandoff(nextRole: Role): void {
-  if (nextRole !== "architect") {
+  if (nextRole !== Role.Architect) {
     throw new Error(`Invalid handoff: specifier cannot hand off to ${nextRole}.`);
   }
 }
@@ -63,7 +65,7 @@ function returnsApprovedSpecificationToSpecifier(
   mode: "delivery" | "restitution",
   nextRole: Role,
 ): boolean {
-  return mode === "restitution" && nextRole === "specifier";
+  return mode === "restitution" && nextRole === Role.Specifier;
 }
 
 function isDeliveryClarification(
@@ -71,46 +73,46 @@ function isDeliveryClarification(
   nextRole: Role,
   mode: "delivery" | "restitution",
 ): boolean {
-  return from === "architect" && nextRole === "specifier" && mode === "delivery";
+  return from === Role.Architect && nextRole === Role.Specifier && mode === "delivery";
 }
 
 export function firstImplementationRole(plan: ChangePlan): Role {
   if (plan.frontendRequired) {
-    return "ui-designer";
+    return Role.UiDesigner;
   }
 
   if (plan.dataRequired) {
-    return "data-engineer";
+    return Role.DataEngineer;
   }
 
   if (plan.backendRequired) {
-    return "backend-coder";
+    return Role.BackendCoder;
   }
 
-  return "qa";
+  return Role.Qa;
 }
 
 export function nextImplementationRole(from: Role, plan: ChangePlan): Role {
-  if (from === "architect") {
+  if (from === Role.Architect) {
     return firstImplementationRole(plan);
   }
 
-  if (from === "ui-designer" && plan.dataRequired) {
-    return "data-engineer";
+  if (from === Role.UiDesigner && plan.dataRequired) {
+    return Role.DataEngineer;
   }
 
-  if ((from === "ui-designer" || from === "data-engineer") && plan.backendRequired) {
-    return "backend-coder";
+  if ((from === Role.UiDesigner || from === Role.DataEngineer) && plan.backendRequired) {
+    return Role.BackendCoder;
   }
 
   if (
-    ["ui-designer", "data-engineer", "backend-coder"].includes(from) &&
+    [Role.UiDesigner, Role.DataEngineer, Role.BackendCoder].includes(from) &&
     plan.frontendRequired
   ) {
-    return "frontend-coder";
+    return Role.FrontendCoder;
   }
 
-  return "qa";
+  return Role.Qa;
 }
 
 export function validateTransition(
@@ -119,7 +121,7 @@ export function validateTransition(
   mode: "delivery" | "restitution" = "delivery",
   plan?: ChangePlan,
 ): void {
-  if (turn.decision === "complete") {
+  if (turn.decision === TurnDecision.Complete) {
     validateCompletion(from, turn);
 
     return;
@@ -133,19 +135,19 @@ export function validateTransition(
     );
   }
 
-  if (from === "specifier") {
+  if (from === Role.Specifier) {
     validateSpecifierHandoff(nextRole);
 
     return;
   }
 
-  if (from === "qa") {
+  if (from === Role.Qa) {
     validateQaFeedback(turn, nextRole);
 
     return;
   }
 
-  if (nextRole === "architect") {
+  if (nextRole === Role.Architect) {
     return;
   }
 

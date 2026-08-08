@@ -1,6 +1,7 @@
 import { open, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { roleSchema } from "../domain/schemas.ts";
+import { Role } from "../domain/roles.ts";
 
 const runDirectory = process.argv[2];
 const role = roleSchema.parse(process.argv[3]);
@@ -12,13 +13,13 @@ if (!runDirectory) {
 const logPath = resolve(runDirectory, "logs", `${role}.log`);
 let offset = 0;
 const colors = {
-  specifier: "35",
-  architect: "34",
-  "ui-designer": "35",
-  "data-engineer": "36",
-  "backend-coder": "33",
-  "frontend-coder": "34",
-  qa: "32",
+  [Role.Specifier]: "35",
+  [Role.Architect]: "34",
+  [Role.UiDesigner]: "35",
+  [Role.DataEngineer]: "36",
+  [Role.BackendCoder]: "33",
+  [Role.FrontendCoder]: "34",
+  [Role.Qa]: "32",
 } as const;
 const color = colors[role];
 console.log(`\u001b[1;${color}m╭──────────────────────────────────────────────╮`);

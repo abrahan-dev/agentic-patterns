@@ -10,6 +10,7 @@ import {
   loadRestitutionState,
   runRestitution,
 } from "../restitution/restitution.ts";
+import { RestitutionStatus, RunStatus } from "../domain/workflow-values.ts";
 import {
   FileSpecificationJournal,
   InMemorySpecificationJournal,
@@ -112,7 +113,7 @@ async function executeRestitution(
     maxTurnsOverride,
   );
   console.log(
-    `\n${result.status === "completed" ? "✓" : "!"} Restitution ${result.status}.`,
+    `\n${result.status === RestitutionStatus.Completed ? "✓" : "!"} Restitution ${result.status}.`,
   );
   console.log(
     `${result.completedSequences.length}/${result.specifications.length} specifications completed.`,
@@ -149,7 +150,7 @@ async function restoreStatus(arguments_: CliArguments): Promise<void> {
       currentRole = currentRun.currentRole;
       currentTokenTotals = currentRun.tokenTotals;
     } catch {
-      // The controller may have stopped while initializing the current spec.
+      // The controller can stop while it initializes the current specification.
     }
   }
 
@@ -273,7 +274,7 @@ async function startDevelopment(arguments_: CliArguments, demo: boolean): Promis
   await executeRun(created.runDirectory, true);
   const state = await loadRunState(created.runDirectory);
 
-  if (state.status !== "completed") {
+  if (state.status !== RunStatus.Completed) {
     process.exitCode = 1;
   }
 }

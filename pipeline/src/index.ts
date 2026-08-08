@@ -37,7 +37,7 @@ async function run(): Promise<void> {
 
     const client = new OpenAI();
 
-    // The pipeline remains explicit: each stage feeds the next one.
+    // Keep the pipeline explicit. Each stage supplies input to the next stage.
     const weekPreferences = await askWeekPreferences();
     const skeleton = await createMenuSchema(client, weekPreferences);
 
@@ -48,7 +48,7 @@ async function run(): Promise<void> {
     closeQuestions();
     const planWithRecipes = await addRecipes(client, menu, recipeDetail);
 
-    // This stage does not need any additional user context.
+    // This stage does not need more user information.
     finalPlan = await createShoppingList(client, planWithRecipes);
   }
 

@@ -4,12 +4,17 @@ import {
   agentTurnSchema,
   type AgentTurn,
   type ChangePlan,
-  type Role,
   type RunState,
 } from "../domain/schemas.ts";
+import { Role } from "../domain/roles.ts";
+import { TurnDecision } from "../domain/workflow-values.ts";
 import { firstImplementationRole, nextImplementationRole } from "../domain/workflow.ts";
 
-const codeWritingRoles = ["data-engineer", "backend-coder", "frontend-coder"] as const;
+const codeWritingRoles = [
+  Role.DataEngineer,
+  Role.BackendCoder,
+  Role.FrontendCoder,
+] as const;
 export type CodeWritingRole = (typeof codeWritingRoles)[number];
 
 export function isCodeWritingRole(role: Role): role is CodeWritingRole {
@@ -36,19 +41,19 @@ export function latestChangePlan(
   state: RunState,
   turn: AgentTurn,
 ): ChangePlan | undefined {
-  if (turn.role === "architect") {
+  if (turn.role === Role.Architect) {
     return turn.changePlan;
   }
 
   const architect = state.messages.findLast(
-    (message) => message.turn?.role === "architect",
+    (message) => message.turn?.role === Role.Architect,
   )?.turn;
 
-  return architect?.role === "architect" ? architect.changePlan : undefined;
+  return architect?.role === Role.Architect ? architect.changePlan : undefined;
 }
 
 export function canonicalizeNextRole(state: RunState, turn: AgentTurn): AgentTurn {
-  if (turn.role === "architect" && turn.nextRole !== "specifier") {
+  if (turn.role === Role.Architect && turn.nextRole !== Role.Specifier) {
     return agentTurnSchema.parse({
       ...turn,
       nextRole: firstImplementationRole(turn.changePlan),
@@ -56,10 +61,10 @@ export function canonicalizeNextRole(state: RunState, turn: AgentTurn): AgentTur
   }
 
   if (
-    ["ui-designer", ...codeWritingRoles].includes(
-      turn.role as "ui-designer" | CodeWritingRole,
+    [Role.UiDesigner, ...codeWritingRoles].includes(
+      turn.role as Role.UiDesigner | CodeWritingRole,
     ) &&
-    turn.nextRole !== "architect"
+    turn.nextRole !== Role.Architect
   ) {
     const plan = latestChangePlan(state, turn);
 
@@ -71,7 +76,11 @@ export function canonicalizeNextRole(state: RunState, turn: AgentTurn): AgentTur
       : turn;
   }
 
-  if (turn.role === "qa" && turn.decision === "handoff" && turn.failureOwner) {
+  if (
+    turn.role === Role.Qa &&
+    turn.decision === TurnDecision.Handoff &&
+    turn.failureOwner
+  ) {
     return agentTurnSchema.parse({ ...turn, nextRole: turn.failureOwner });
   }
 
@@ -102,7 +111,7 @@ export function enrichWithObservedEvidence(
     };
   }
 
-  if (turn.role === "qa") {
+  if (turn.role === Role.Qa) {
     return {
       ...turn,
       commands: [
